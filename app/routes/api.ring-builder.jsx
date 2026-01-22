@@ -255,14 +255,14 @@ async function fetchCollectionProducts(admin, collectionHandle) {
     
     console.log('Products in collection:', collection.products?.edges?.length || 0);
     
-    const result = processCollectionProducts(collection);
+    const result = await processCollectionProducts(collection, admin);
     console.log('Processed result:', {
       productCount: result.products.length,
       hasGems: result.hasGems,
       hasSets: result.hasSets,
       firstProduct: result.products[0] || 'No products'
     });
-    
+
     return result;
     
   } catch (error) {
@@ -272,7 +272,7 @@ async function fetchCollectionProducts(admin, collectionHandle) {
   }
 }
 
-function processCollectionProducts(collection) {
+async function processCollectionProducts(collection, admin) {
   let hasGems = false;
   let hasSets = false;
   let gemCount = 0;
@@ -282,9 +282,93 @@ function processCollectionProducts(collection) {
   console.log('=== PRODUCT CLASSIFICATION DEBUG ===');
   console.log('Total products in collection:', collection.products.edges.length);
 
+  // Helper to extract GIDs from a value
+  const extractGids = (value) => {
+    if (!value) return [];
+    const gids = [];
+    if (value.startsWith('[')) {
+      try {
+        const arr = JSON.parse(value);
+        if (Array.isArray(arr)) {
+          arr.forEach(item => {
+            if (typeof item === 'string' && item.includes('gid://shopify/Metaobject')) {
+              gids.push(item);
+            }
+          });
+        }
+      } catch (e) {}
+    } else if (value.includes('gid://shopify/Metaobject')) {
+      gids.push(value);
+    }
+    return gids;
+  };
+
+  // Collect all unresolved GIDs from all products
+  const unresolvedGids = new Set();
+  collection.products.edges.forEach(edge => {
+    const product = edge.node;
+    const metafieldsToCheck = [
+      product.labDiamondType,
+      product.stoneShape,
+      product.stoneColor,
+      product.stoneClarity,
+      product.cutGrade,
+      product.centerStoneShape,
+      product.ringStyle,
+      product.metalType
+    ];
+
+    metafieldsToCheck.forEach(mf => {
+      if (!mf) return;
+      const hasResolvedRef = mf.reference?.displayName || mf.reference?.handle;
+      const hasResolvedRefs = mf.references?.nodes?.length > 0;
+      if (!hasResolvedRef && !hasResolvedRefs && mf.value) {
+        extractGids(mf.value).forEach(gid => unresolvedGids.add(gid));
+      }
+    });
+  });
+
+  // Fetch unresolved metaobjects in batch
+  const metaobjectMap = new Map();
+  console.log('Ring Builder - Unresolved GIDs:', Array.from(unresolvedGids));
+
+  if (unresolvedGids.size > 0 && admin) {
+    const gidArray = Array.from(unresolvedGids);
+    console.log('Ring Builder - Fetching metaobjects for GIDs:', gidArray.length);
+    try {
+      const metaobjectResponse = await admin.graphql(
+        `#graphql
+          query getMetaobjects($ids: [ID!]!) {
+            nodes(ids: $ids) {
+              ... on Metaobject {
+                id
+                displayName
+                handle
+              }
+            }
+          }
+        `,
+        { variables: { ids: gidArray } }
+      );
+      const metaobjectData = await metaobjectResponse.json();
+      console.log('Ring Builder - Metaobject response nodes:', metaobjectData.data?.nodes?.length || 0);
+
+      if (metaobjectData.data?.nodes) {
+        metaobjectData.data.nodes.forEach(node => {
+          if (node && node.id) {
+            console.log('Ring Builder - Resolved:', node.id, '->', node.displayName || node.handle);
+            metaobjectMap.set(node.id, node.displayName || node.handle || '');
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Ring Builder - Error fetching metaobjects:', e);
+    }
+  }
+
   const products = collection.products.edges.map((edge, index) => {
     const product = edge.node;
-    const processedProduct = processProduct(product);
+    const processedProduct = processProduct(product, metaobjectMap);
 
     // Debug logging for first 5 products
     if (index < 5) {
@@ -317,11 +401,11 @@ function processCollectionProducts(collection) {
   return { products, hasGems, hasSets };
 }
 
-function processProduct(product) {
+function processProduct(product, metaobjectMap = new Map()) {
   // Determine product type
   const isGem = isGemstoneProduct(product);
   const isSet = isSettingProduct(product);
-  
+
   // Process basic product data
   const processedProduct = {
     id: extractId(product.id),
@@ -334,7 +418,7 @@ function processProduct(product) {
     featuredImage: product.featuredImage?.url,
     images: product.images?.edges?.map(edge => edge.node.url) || [],
     variants: processVariants(product.variants),
-    metafields: processMetafields(product),
+    metafields: processMetafields(product, metaobjectMap),
     isGem,
     isSet
   };
@@ -428,7 +512,7 @@ function processVariants(variants) {
   });
 }
 
-function processMetafields(product) {
+function processMetafields(product, metaobjectMap = new Map()) {
   // DEBUG: Log raw metafield data for first few products
   if (product.title) {
     console.log('=== METAFIELD DEBUG for:', product.title.substring(0, 50), '===');
@@ -444,6 +528,27 @@ function processMetafields(product) {
   const certParts = certificateValue.split(' - ');
   const certLab = certParts[0] || '';
   const certNumber = certParts[1] || '';
+
+  // Helper to extract GIDs from a value
+  const extractGids = (value) => {
+    if (!value) return [];
+    const gids = [];
+    if (value.startsWith('[')) {
+      try {
+        const arr = JSON.parse(value);
+        if (Array.isArray(arr)) {
+          arr.forEach(item => {
+            if (typeof item === 'string' && item.includes('gid://shopify/Metaobject')) {
+              gids.push(item);
+            }
+          });
+        }
+      } catch (e) {}
+    } else if (value.includes('gid://shopify/Metaobject')) {
+      gids.push(value);
+    }
+    return gids;
+  };
 
   // Extract value from metafield - handles both plain values and metaobject references
   const getMetafieldValue = (metafield) => {
@@ -464,6 +569,17 @@ function processMetafields(product) {
       if (ref.displayName) return ref.displayName;
       if (ref.handle) {
         return ref.handle.charAt(0).toUpperCase() + ref.handle.slice(1).replace(/-/g, ' ');
+      }
+    }
+
+    // Fallback: try to resolve from our fetched metaobjects
+    if (metafield.value) {
+      const gids = extractGids(metafield.value);
+      if (gids.length > 0) {
+        const resolved = gids.map(gid => metaobjectMap.get(gid)).filter(v => v);
+        if (resolved.length > 0) {
+          return resolved.join(', ');
+        }
       }
     }
 
@@ -1667,6 +1783,11 @@ const COLLECTION_PRODUCTS_QUERY = `
               reference {
                 ... on Metaobject { displayName handle }
               }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
             }
             stoneWeight: metafield(namespace: "custom", key: "stone_weight") { value }
             stoneShape: metafield(namespace: "custom", key: "stone_shape") {
@@ -1708,17 +1829,57 @@ const COLLECTION_PRODUCTS_QUERY = `
               reference {
                 ... on Metaobject { displayName handle }
               }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
             }
-            polishGrade: metafield(namespace: "custom", key: "polish_grade") { value }
-            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") { value }
+            polishGrade: metafield(namespace: "custom", key: "polish_grade") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
+            }
+            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
+            }
             treatment: metafield(namespace: "custom", key: "treatment") { value }
             certificate: metafield(namespace: "custom", key: "certificate") { value }
-            fluorescence: metafield(namespace: "custom", key: "fluorescence") { value }
+            fluorescence: metafield(namespace: "custom", key: "fluorescence") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
+            }
             # Setting metafields
             centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") {
               value
               reference {
                 ... on Metaobject { displayName handle }
+              }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
               }
             }
             ringStyle: metafield(namespace: "custom", key: "ring_style") {
@@ -1726,11 +1887,21 @@ const COLLECTION_PRODUCTS_QUERY = `
               reference {
                 ... on Metaobject { displayName handle }
               }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
             }
             metalType: metafield(namespace: "custom", key: "metal_type") {
               value
               reference {
                 ... on Metaobject { displayName handle }
+              }
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
               }
             }
           }

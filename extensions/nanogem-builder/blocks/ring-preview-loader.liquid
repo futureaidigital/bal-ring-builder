@@ -33,7 +33,7 @@
   
   if (!gemstoneHandle || !settingHandle) {
     if (!location.hostname.includes('admin.shopify.com')) {
-      location.href = '/collections/gemstones';
+      location.href = '/collections/loose-white-lab-grown-diamonds';
     }
     return;
   }
@@ -153,20 +153,16 @@
     document.querySelectorAll('.price-item--sale,.price__sale,.badge--sale,.product-badge').forEach(el => el.style.display = 'none');
   }
   
-  function formatMoney(fils) {
-    // Convert USD to AED (your shop uses USD base but displays AED)
-    const USD_TO_AED = 3.67;
-    const filsInAED = Math.round(fils * USD_TO_AED);
-    
-    // Convert to actual amount (from fils/cents)
-    const amount = filsInAED / 100;
-    
+  function formatMoney(cents) {
+    // Convert from cents to actual amount
+    const amount = cents / 100;
+
     // Format with proper comma separators
     const formatted = amount.toLocaleString('en-AE', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
-    
+
     return `AED ${formatted}`;
   }
   
@@ -399,7 +395,7 @@
   }
 
   function addActionButtons(gemstoneHandle, settingHandle, settingVariantId) {
-    const html = `<div class="ring-preview-actions"><div class="ring-preview-actions-grid"><a href="/collections/gemstones?setting=${settingHandle}${settingVariantId ? '&setting_variant=' + settingVariantId : ''}" class="button button--outline">Change Gemstone</a><a href="/collections/settings?gemstone=${gemstoneHandle}" class="button button--outline">Change Setting</a></div><button type="button" class="button button--outline ring-preview-share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Share this Design</span></button></div>`;
+    const html = `<div class="ring-preview-actions"><div class="ring-preview-actions-grid"><a href="/collections/loose-white-lab-grown-diamonds?setting=${settingHandle}${settingVariantId ? '&setting_variant=' + settingVariantId : ''}" class="button button--outline">Change Diamond</a><a href="/collections/ring-settings?gemstone=${gemstoneHandle}" class="button button--outline">Change Setting</a></div><button type="button" class="button button--outline ring-preview-share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Share this Design</span></button></div>`;
     
     const container = document.createElement('div');
     container.innerHTML = html;
@@ -549,32 +545,67 @@ function addCollapsibleDetails(gemstone, setting, settingVariant) {
   };
     
   // Test getMeta function
-  console.log('Testing getMeta for gemstone_type:', getMeta(gemstone, 'gemstone_type'));
-  console.log('Testing getMeta for gemstone_weight:', getMeta(gemstone, 'gemstone_weight'));
+  console.log('Testing getMeta for diamond_type:', getMeta(gemstone, 'diamond_type'));
+  console.log('Testing getMeta for stone_weight:', getMeta(gemstone, 'stone_weight'));
+  console.log('Testing getMeta for stone_shape:', getMeta(gemstone, 'stone_shape'));
+  console.log('Testing getMeta for ring_style:', getMeta(setting, 'ring_style'));
   console.log('Testing getVariantMeta for custom.metal_weight:', getVariantMeta(settingVariant, 'custom.metal_weight'));
   
+  // Helper to extract shape from product title as fallback
+  const extractShapeFromTitle = (title) => {
+    if (!title) return '';
+    const shapes = ['Round', 'Princess', 'Cushion', 'Oval', 'Emerald', 'Pear', 'Marquise', 'Radiant', 'Asscher', 'Heart'];
+    const titleLower = title.toLowerCase();
+    for (const shape of shapes) {
+      if (titleLower.includes(shape.toLowerCase())) {
+        return shape;
+      }
+    }
+    return '';
+  };
+
+  // Helper to extract style from tags as fallback
+  const extractStyleFromTags = (tags) => {
+    if (!tags || !Array.isArray(tags)) return '';
+    const styleKeywords = ['Solitaire', 'Halo', 'Trilogy', 'Three Stone', 'Pavé', 'Pave', 'Channel', 'Tension', 'Vintage', 'Cathedral', 'Split Shank', 'Hidden Halo', 'Bezel'];
+    for (const tag of tags) {
+      for (const keyword of styleKeywords) {
+        if (tag.toLowerCase() === keyword.toLowerCase() || tag.toLowerCase().includes(keyword.toLowerCase())) {
+          return keyword;
+        }
+      }
+    }
+    return '';
+  };
+
+  // Get diamond shape with fallbacks
+  const diamondShape = getMeta(gemstone, 'stone_shape') || extractShapeFromTitle(gemstone.title) || '-';
+
+  // Get ring style with fallbacks
+  const ringStyle = getMeta(setting, 'ring_style') || extractStyleFromTags(setting.tags) || setting.productType || setting.type || 'Setting';
+
   const html = `<div class="ring-preview-details">
     <div class="details-box">
       <div class="details-header">
-        <span class="details-title">Gemstone Details</span>
+        <span class="details-title">Diamond Details</span>
       </div>
       <div class="details-table">
-        <div class="details-row"><span class="details-label">Type</span><span class="details-value">${getMeta(gemstone,'gemstone_type')||'Gemstone'}</span></div>
-        <div class="details-row"><span class="details-label">Shape</span><span class="details-value">${getMeta(gemstone,'gemstone_shape')||'-'}</span></div>
-        <div class="details-row"><span class="details-label">Weight</span><span class="details-value">${getMeta(gemstone,'gemstone_weight')||'-'} ct</span></div>
-        <div class="details-row"><span class="details-label">Color</span><span class="details-value">${getMeta(gemstone,'gemstone_color')||'-'}</span></div>
-        <div class="details-row"><span class="details-label">Dimensions</span><span class="details-value">${getMeta(gemstone,'gemstone_dimensions')||'-'}</span></div>
-        <div class="details-row"><span class="details-label">Treatment</span><span class="details-value">${getMeta(gemstone,'gemstone_treatment')||'Natural'}</span></div>
-        <div class="details-row"><span class="details-label">Origin</span><span class="details-value">${getMeta(gemstone,'gemstone_origin')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Type</span><span class="details-value">${getMeta(gemstone,'diamond_type')||'Lab Grown Diamond'}</span></div>
+        <div class="details-row"><span class="details-label">Shape</span><span class="details-value">${diamondShape}</span></div>
+        <div class="details-row"><span class="details-label">Carat Weight</span><span class="details-value">${getMeta(gemstone,'stone_weight')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Color</span><span class="details-value">${getMeta(gemstone,'stone_color')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Clarity</span><span class="details-value">${getMeta(gemstone,'stone_clarity')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Cut</span><span class="details-value">${getMeta(gemstone,'cut_grade')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Dimensions</span><span class="details-value">${getMeta(gemstone,'stone_dimensions')||'-'}</span></div>
         <div class="details-row"><span class="details-label">Certification</span><span class="details-value">${getMeta(gemstone,'certification_laboratory')||'-'}</span></div>
       </div>
     </div>
     <div class="details-box">
       <div class="details-header">
-        <span class="details-title">Setting Details</span>
+        <span class="details-title">Ring Details</span>
       </div>
       <div class="details-table">
-        <div class="details-row"><span class="details-label">Style</span><span class="details-value">${getMeta(setting,'ring_style')||setting.productType||setting.type||'Setting'}</span></div>
+        <div class="details-row"><span class="details-label">Style</span><span class="details-value">${ringStyle}</span></div>
         <div class="details-row"><span class="details-label">Metal Type</span><span class="details-value">${settingVariant.option1||getMeta(setting,'metal_type')||'-'}</span></div>
         <div class="details-row"><span class="details-label">Stone Compatibility</span><span class="details-value">${getMeta(setting,'center_stone_shape')||'Various'} shapes</span></div>
         ${settingVariant.option2 ? `<div class="details-row"><span class="details-label">Size Range</span><span class="details-value">${settingVariant.option2}</span></div>` : ''}
