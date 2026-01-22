@@ -411,42 +411,67 @@ function processMetafields(product) {
   const certLab = certParts[0] || '';
   const certNumber = certParts[1] || '';
 
-  // Parse shape from metaobject reference (format: "center_stone_shape.round" -> "Round")
+  // Parse shape from metaobject reference or clean metaobject GIDs
   const parseShape = (shapeValue) => {
     if (!shapeValue) return '';
+
+    // Convert to string if needed
+    const strValue = String(shapeValue);
+
+    // If it's a metaobject GID (gid://shopify/Metaobject/...) or JSON array containing one, return empty
+    // These need to be resolved via separate API call which we don't support yet
+    if (strValue.includes('gid://shopify/Metaobject') || strValue.includes('gid://shopify')) {
+      return '';
+    }
+
     // Handle metaobject reference format like "center_stone_shape.round"
-    if (shapeValue.includes('.')) {
-      const shapePart = shapeValue.split('.').pop();
+    if (strValue.includes('.') && !strValue.startsWith('[')) {
+      const shapePart = strValue.split('.').pop();
       return shapePart.charAt(0).toUpperCase() + shapePart.slice(1);
     }
-    return shapeValue;
+
+    // If it starts with [ it's likely a JSON array, skip it
+    if (strValue.startsWith('[')) {
+      return '';
+    }
+
+    return strValue;
+  };
+
+  // Clean any value that might contain metaobject GIDs
+  const cleanMetaobjectValue = (value) => {
+    if (!value) return '';
+    const strValue = String(value);
+    // Skip metaobject GIDs and JSON arrays containing them
+    if (strValue.includes('gid://shopify') || strValue.startsWith('[')) return '';
+    return strValue;
   };
 
   return {
-    // Diamond fields (mapped from new structure)
-    diamond_type: product.labDiamondType?.value,
-    stone_weight: product.stoneWeight?.value,
+    // Diamond fields (mapped from new structure) - clean metaobject GIDs
+    diamond_type: cleanMetaobjectValue(product.labDiamondType?.value),
+    stone_weight: cleanMetaobjectValue(product.stoneWeight?.value),
     stone_shape: parseShape(product.stoneShape?.value),
-    stone_color: product.stoneColor?.value,
-    stone_clarity: product.stoneClarity?.value,
-    stone_dimensions: product.stoneDimensions?.value,
-    cut_grade: product.cutGrade?.value,
-    polish_grade: product.polishGrade?.value,
-    symmetry_grade: product.symmetryGrade?.value,
-    treatment: product.treatment?.value,
-    fluorescence: product.fluorescence?.value,
+    stone_color: cleanMetaobjectValue(product.stoneColor?.value),
+    stone_clarity: cleanMetaobjectValue(product.stoneClarity?.value),
+    stone_dimensions: cleanMetaobjectValue(product.stoneDimensions?.value),
+    cut_grade: cleanMetaobjectValue(product.cutGrade?.value),
+    polish_grade: cleanMetaobjectValue(product.polishGrade?.value),
+    symmetry_grade: cleanMetaobjectValue(product.symmetryGrade?.value),
+    treatment: cleanMetaobjectValue(product.treatment?.value),
+    fluorescence: cleanMetaobjectValue(product.fluorescence?.value),
     certification_laboratory: certLab,
     certification_number: certNumber,
     certificate_full: certificateValue,
     // Setting fields
     center_stone_shape: parseShape(product.centerStoneShape?.value),
-    ring_style: product.ringStyle?.value,
-    metal_type: product.metalType?.value,
+    ring_style: cleanMetaobjectValue(product.ringStyle?.value),
+    metal_type: cleanMetaobjectValue(product.metalType?.value),
     // Legacy mappings for backward compatibility
-    gemstone_type: product.labDiamondType?.value,
-    gemstone_weight: product.stoneWeight?.value,
+    gemstone_type: cleanMetaobjectValue(product.labDiamondType?.value),
+    gemstone_weight: cleanMetaobjectValue(product.stoneWeight?.value),
     gemstone_shape: parseShape(product.stoneShape?.value),
-    gemstone_color: product.stoneColor?.value,
+    gemstone_color: cleanMetaobjectValue(product.stoneColor?.value),
     gemstone_treatment: product.treatment?.value,
     gemstone_dimensions: product.stoneDimensions?.value
   };
