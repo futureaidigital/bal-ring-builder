@@ -440,14 +440,27 @@ function processMetafields(product) {
     const value = metafield.value;
     if (!value) return '';
 
-    const strValue = String(value);
+    let strValue = String(value);
+
+    // Handle JSON array (list-type metafields) like ["center_stone_shape.round"]
+    if (strValue.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(strValue);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Take first value from array
+          strValue = String(parsed[0]);
+        }
+      } catch (e) {
+        // Not valid JSON, continue with raw value
+      }
+    }
 
     // Skip metaobject GIDs that weren't resolved
-    if (strValue.includes('gid://shopify') || strValue.startsWith('[')) {
+    if (strValue.includes('gid://shopify')) {
       return '';
     }
 
-    // Handle old format like "center_stone_shape.round"
+    // Handle format like "center_stone_shape.round" -> "Round"
     if (strValue.includes('.') && !strValue.includes('://')) {
       const parts = strValue.split('.');
       const lastPart = parts.pop();
