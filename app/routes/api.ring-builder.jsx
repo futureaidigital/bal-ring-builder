@@ -728,6 +728,14 @@ function processSettingData(product) {
 
   const metalType = Array.from(metalTypes).join(', ');
 
+  // DEBUG: Log setting size processing
+  if (product.title) {
+    console.log('=== SETTING SIZE DEBUG for:', product.title.substring(0, 40), '===');
+    console.log('Min size:', minSize, 'Max size:', maxSize);
+    console.log('Variant count:', product.variants.edges.length);
+    console.log('First variant centerStoneCaratWeight:', product.variants.edges[0]?.node?.centerStoneCaratWeight);
+  }
+
   return {
     settingMinSize: minSize !== 999.0 ? minSize.toString() : '',
     settingMaxSize: maxSize > 0 ? maxSize.toString() : '',
