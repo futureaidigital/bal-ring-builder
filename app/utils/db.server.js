@@ -5,10 +5,13 @@ import { createClient } from "@libsql/client";
 
 let prisma;
 
-if (process.env.NODE_ENV === "production" && process.env.TURSO_DATABASE_URL) {
-  // Use Turso in production
+// Check if we should use Turso (when auth token is present)
+const useTurso = process.env.TURSO_AUTH_TOKEN && process.env.DATABASE_URL?.startsWith("libsql://");
+
+if (useTurso) {
+  // Use Turso with libSQL adapter
   const libsql = createClient({
-    url: process.env.TURSO_DATABASE_URL,
+    url: process.env.DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
   const adapter = new PrismaLibSQL(libsql);
