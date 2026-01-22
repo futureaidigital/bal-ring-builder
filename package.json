@@ -23,8 +23,8 @@
     "node": "^18.20 || ^20.10 || >=21.0.0"
   },
   "dependencies": {
-    "@libsql/client": "0.8.1",
-    "@prisma/adapter-libsql": "^7.3.0",
+    "@libsql/client": "^0.14.0",
+    "@prisma/adapter-libsql": "^6.8.0",
     "@prisma/client": "^6.8.2",
     "@remix-run/dev": "^2.16.1",
     "@remix-run/fs-routes": "^2.16.1",
