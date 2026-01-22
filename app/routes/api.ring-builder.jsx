@@ -20,12 +20,16 @@ const DEFAULT_SETTINGS = {
 const RING_BUILDER_COLLECTIONS = [
   'gemstones', 'gemstone', 'stones', 'precious-stones', 'precious_stones',
   'sapphires', 'rubies', 'emeralds', 'diamonds', 'setting', 'settings',
-  'ring-settings', 'ring_settings', 'mountings', 'rings', 'pendants'
+  'ring-settings', 'ring_settings', 'mountings', 'rings', 'pendants',
+  'loose-stones', 'loose-diamonds', 'white-lab-diamonds', 'lab-diamonds',
+  'loose-white-lab-grown-diamonds', 'loose-blue-lab-grown-diamonds',
+  'loose-pink-lab-grown-diamonds', 'loose-yellow-lab-grown-diamonds'
 ];
 
 const GEMSTONE_KEYWORDS = [
-  'gemstone', 'sapphire', 'ruby', 'emerald', 'stone', 
-  'setting', 'mounting', 'ring', 'pendant'
+  'gemstone', 'sapphire', 'ruby', 'emerald', 'stone',
+  'setting', 'mounting', 'ring', 'pendant',
+  'diamond', 'loose', 'lab-grown', 'lab-diamond'
 ];
 const GEMSTONE_TYPE_ICON_MAP = {
   'Blue Sapphire': 'Blue Sapphire Icon.png',
