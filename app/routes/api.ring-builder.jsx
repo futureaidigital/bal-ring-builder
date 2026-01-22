@@ -821,13 +821,22 @@ function getProductShape(product) {
   }
 
   // If still empty, try to extract from product title
+  // Find the shape that appears FIRST in the title (usually the center stone shape)
   if (!shape && product.title) {
     const titleLower = product.title.toLowerCase();
+    let earliestPosition = Infinity;
+    let earliestShape = '';
+
     for (const knownShape of KNOWN_SHAPES) {
-      if (titleLower.includes(knownShape.toLowerCase())) {
-        shape = knownShape;
-        break;
+      const position = titleLower.indexOf(knownShape.toLowerCase());
+      if (position !== -1 && position < earliestPosition) {
+        earliestPosition = position;
+        earliestShape = knownShape;
       }
+    }
+
+    if (earliestShape) {
+      shape = earliestShape;
     }
   }
 
