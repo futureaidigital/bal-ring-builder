@@ -84,10 +84,10 @@ export const loader = async ({ request }) => {
   const searchQuery = url.searchParams.get("search") || "";
   
   try {
-    // Build Shopify query
-    let shopifyQuery = productType === 'gemstone' 
-      ? '(product_type:"Precious stone" OR tag:gemstone)'
-      : '(tag:Setting_Ring OR tag:Setting_Pendant)';
+    // Build Shopify query - Updated for diamonds
+    let shopifyQuery = productType === 'gemstone'
+      ? '(product_type:"Precious stone" OR product_type:"Loose Stone" OR tag:gemstone OR tag:"White Lab Diamond" OR tag:"Lab Diamond" OR tag:"Loose Stone")'
+      : '(tag:Setting_Ring OR tag:Setting_Pendant OR tag:"Ring Setting" OR tag:"Pendant Setting" OR product_type:"Ring Setting" OR product_type:"Pendant Setting")';
     
     if (searchQuery) {
       shopifyQuery += ` AND (title:*${searchQuery}* OR tag:*${searchQuery}*)`;
@@ -142,16 +142,17 @@ export const loader = async ({ request }) => {
       // Extract product ID from GID
       const productId = node.id.split('/').pop();
 
-      // Validation logic
+      // Validation logic - Updated for diamonds
       let validation = {};
       if (productType === 'gemstone') {
         validation = {
-          weight: !!(metafields.gemstone_weight || metafields.weight),
-          shape: !!(metafields.gemstone_shape || metafields.shape),
-          type: !!(metafields.gemstone_type || metafields.stone_type),
+          weight: !!(metafields.stone_weight || metafields.gemstone_weight),
+          shape: !!(metafields.stone_shape || metafields.gemstone_shape),
+          color: !!(metafields.stone_color || metafields.gemstone_color),
+          clarity: !!metafields.stone_clarity,
           hasAllRequired: false
         };
-        validation.hasAllRequired = validation.weight && validation.shape && validation.type;
+        validation.hasAllRequired = validation.weight && validation.shape && validation.color;
       } else {
         validation = {
           centerStoneShape: !!(metafields.center_stone_shape || metafields.stone_shape),
@@ -563,14 +564,14 @@ export default function MerchantDashboard() {
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
         {isGemstone ? (
           <>
-            {product.metafields.gemstone_type && (
-              <Badge size="small" status="info">{product.metafields.gemstone_type}</Badge>
+            {(product.metafields.stone_color || product.metafields.stone_clarity) && (
+              <Badge size="small" status="info">{product.metafields.stone_color} {product.metafields.stone_clarity}</Badge>
             )}
-            {product.metafields.gemstone_shape && (
-              <Badge size="small">{product.metafields.gemstone_shape}</Badge>
+            {(product.metafields.stone_shape || product.metafields.gemstone_shape) && (
+              <Badge size="small">{product.metafields.stone_shape || product.metafields.gemstone_shape}</Badge>
             )}
-            {product.metafields.gemstone_weight && (
-              <Badge size="small">{product.metafields.gemstone_weight}ct</Badge>
+            {(product.metafields.stone_weight || product.metafields.gemstone_weight) && (
+              <Badge size="small">{product.metafields.stone_weight || product.metafields.gemstone_weight}</Badge>
             )}
           </>
         ) : (
@@ -621,9 +622,9 @@ export default function MerchantDashboard() {
 
   const tabs = [
     {
-      id: 'gemstones',
-      content: `💎 Gemstones (${stats.gemstones})`,
-      panelID: 'gemstones-panel',
+      id: 'diamonds',
+      content: `💎 Diamonds (${stats.gemstones})`,
+      panelID: 'diamonds-panel',
     },
     {
       id: 'settings',
@@ -631,9 +632,9 @@ export default function MerchantDashboard() {
       panelID: 'settings-panel',
     },
     {
-      id: 'origins',
-      content: '🌍 Gemstone Info',
-      panelID: 'origins-panel',
+      id: 'info',
+      content: '📋 Diamond Info',
+      panelID: 'info-panel',
     },
   ];
 
@@ -653,13 +654,13 @@ export default function MerchantDashboard() {
 
   const emptyStateMarkup = (
     <EmptyState
-      heading={selectedTab === 0 ? "No gemstones found" : "No settings found"}
+      heading={selectedTab === 0 ? "No diamonds found" : "No settings found"}
       image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
     >
       <p>
-      {selectedTab === 0 
-        ? "Create products with type 'Precious stone' or tag 'gemstone' to see them here."
-        : "Tag products with 'Setting_Ring' or 'Setting_Pendant' to see them here."}
+      {selectedTab === 0
+        ? "Create products with type 'Loose Stone' or tags 'White Lab Diamond', 'Lab Diamond' to see them here."
+        : "Tag products with 'Ring Setting' or 'Pendant Setting' to see them here."}
       </p>
     </EmptyState>
   );
@@ -668,7 +669,7 @@ export default function MerchantDashboard() {
     <Frame>
       <Page
         title="Ring Builder Manager"
-        subtitle="Manage gemstones and settings for your custom jewelry builder"
+        subtitle="Manage diamonds and settings for your custom jewelry builder"
         primaryAction={{
           content: 'Refresh',
           onAction: () => window.location.reload()
@@ -680,7 +681,7 @@ export default function MerchantDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
               <Card>
                 <div style={{ padding: '20px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', color: '#6d7175', marginBottom: '8px' }}>Active Gemstones</p>
+                  <p style={{ fontSize: '14px', color: '#6d7175', marginBottom: '8px' }}>Active Diamonds</p>
                   <p style={{ fontSize: '32px', fontWeight: '600', color: '#212b36' }}>{stats.gemstones}</p>
                 </div>
               </Card>
@@ -713,10 +714,10 @@ export default function MerchantDashboard() {
                 status="info"
               >
                 <ol style={{ marginLeft: '20px', marginTop: '8px' }}>
-                  <li>Import your gemstones and settings from your Shopify catalog</li>
-                  <li>Customers browse and pair gemstones with their preferred setting</li>
+                  <li>Import your diamonds and settings from your Shopify catalog</li>
+                  <li>Customers browse and pair diamonds with their preferred setting</li>
                   <li>When they click "Add to Cart", both items are added as separate line items</li>
-                  <li>You fulfill the order by setting the chosen stone in the selected ring or pendant</li>
+                  <li>You fulfill the order by setting the chosen diamond in the selected ring or pendant</li>
                 </ol>
               </Banner>
             </Card>
@@ -731,7 +732,7 @@ export default function MerchantDashboard() {
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '200px' }}>
                       <TextField
-                        placeholder={`Search ${selectedTab === 0 ? 'gemstones' : 'settings'}...`}
+                        placeholder={`Search ${selectedTab === 0 ? 'diamonds' : 'settings'}...`}
                         value={searchValue}
                         onChange={setSearchValue}
                         clearButton
@@ -823,7 +824,7 @@ export default function MerchantDashboard() {
                     }}>
                       <div>
                         <p style={{ margin: 0 }}>
-                          Showing {filteredProducts.length} of {products.length} {selectedTab === 0 ? 'gemstones' : 'settings'}
+                          Showing {filteredProducts.length} of {products.length} {selectedTab === 0 ? 'diamonds' : 'settings'}
                         </p>
                       </div>
                     </div>
@@ -838,33 +839,38 @@ export default function MerchantDashboard() {
             <Card title="Required Product Information" sectioned>
               <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 <div>
-                  <h3 style={{ marginBottom: '12px' }}>For Gemstones</h3>
+                  <h3 style={{ marginBottom: '12px' }}>For Diamonds</h3>
                   <div style={{ backgroundColor: '#f6f6f7', padding: '16px', borderRadius: '8px' }}>
                     <p style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
-                      Product Type: "Precious stone" OR Tag: "gemstone"
+                      Product Type: "Loose Stone" OR Tags: "White Lab Diamond", "Lab Diamond"
                     </p>
                     <p style={{ marginBottom: '12px', fontSize: '13px', color: '#6d7175' }}>
                       Required metafields (namespace: custom):
                     </p>
                     <ul style={{ marginLeft: '20px', fontSize: '13px' }}>
-                      <li><strong>gemstone_weight</strong> - Weight in carats</li>
-                      <li><strong>gemstone_shape</strong> - Cut shape</li>
-                      <li><strong>gemstone_type</strong> - Stone type</li>
+                      <li><strong>stone_weight</strong> - Carat weight (e.g., "1.03 ct")</li>
+                      <li><strong>stone_shape</strong> - Cut shape (e.g., "Round", "Oval")</li>
+                      <li><strong>stone_color</strong> - Color grade (e.g., "D", "E", "F")</li>
+                      <li><strong>stone_clarity</strong> - Clarity grade (e.g., "VS1", "VVS2")</li>
+                      <li><strong>cut_grade</strong> - Cut grade (e.g., "Ideal", "Excellent")</li>
+                      <li><strong>certificate</strong> - Certificate info (e.g., "IGI - LG123456")</li>
                     </ul>
                   </div>
                 </div>
-                
+
                <div>
                   <h3 style={{ marginBottom: '12px' }}>For Settings</h3>
                   <div style={{ backgroundColor: '#f6f6f7', padding: '16px', borderRadius: '8px' }}>
                     <p style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
-                      Required Tags: "Setting_Ring" OR "Setting_Pendant"
+                      Tags: "Ring Setting" OR "Pendant Setting"
                     </p>
                     <p style={{ marginBottom: '12px', fontSize: '13px', color: '#6d7175' }}>
                       Required metafields (namespace: custom):
                     </p>
                     <ul style={{ marginLeft: '20px', fontSize: '13px' }}>
-                      <li><strong>center_stone_shape</strong> - Compatible stone shapes</li>
+                      <li><strong>center_stone_shape</strong> - Compatible diamond shapes</li>
+                      <li><strong>center_stone_carat_weight</strong> (variant) - Carat range (e.g., "From 3 to 4.99 ct")</li>
+                      <li><strong>metal_type</strong> (variant) - Metal type (e.g., "18k White Gold")</li>
                     </ul>
                   </div>
                 </div>

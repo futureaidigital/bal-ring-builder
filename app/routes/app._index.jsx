@@ -50,7 +50,7 @@ export default function Index() {
                 Welcome to NanoGem Ring Builder
               </Text>
               <Text as="p">
-                Create a custom jewelry shopping experience by allowing customers to pair gemstones with their perfect setting.
+                Create a custom jewelry shopping experience by allowing customers to pair diamonds with their perfect setting.
               </Text>
             </BlockStack>
           </Card>
@@ -67,7 +67,7 @@ export default function Index() {
                 <Box padding="400">
                   <BlockStack gap="200">
                     <Text as="p" variant="bodySm" color="subdued">
-                      Active Gemstones
+                      Active Diamonds
                     </Text>
                     <Text as="p" variant="heading2xl">
                       {stats.gemstones}
@@ -151,7 +151,7 @@ export default function Index() {
                     Go to your theme editor
                   </List.Item>
                   <List.Item>
-                    Navigate to a gemstone product page
+                    Navigate to a diamond product page
                   </List.Item>
                   <List.Item>
                     Add the "Ring Builder" app block
@@ -174,10 +174,10 @@ export default function Index() {
               </Text>
               <List>
                 <List.Item>
-                  <strong>Import Products:</strong> Add gemstones and settings from your catalog
+                  <strong>Import Products:</strong> Add diamonds and settings from your catalog
                 </List.Item>
                 <List.Item>
-                  <strong>Customer Browses:</strong> Shoppers view gemstones with the Ring Builder
+                  <strong>Customer Browses:</strong> Shoppers view diamonds with the Ring Builder
                 </List.Item>
                 <List.Item>
                   <strong>Select & Customize:</strong> They choose their perfect stone and setting combination
@@ -203,16 +203,17 @@ export default function Index() {
               <InlineStack gap="800" wrap>
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
-                    Gemstones
+                    Diamonds
                   </Text>
                   <Text as="p" variant="bodySm" color="subdued">
                     Must have:
                   </Text>
                   <List type="bullet">
-                    <List.Item>Product type: "Precious stone" OR tag: "gemstone"</List.Item>
-                    <List.Item>Metafield: gemstone_weight</List.Item>
-                    <List.Item>Metafield: gemstone_shape</List.Item>
-                    <List.Item>Metafield: gemstone_type</List.Item>
+                    <List.Item>Product type: "Loose Stone" OR tags: "White Lab Diamond", "Lab Diamond"</List.Item>
+                    <List.Item>Metafield: stone_weight (carat)</List.Item>
+                    <List.Item>Metafield: stone_shape</List.Item>
+                    <List.Item>Metafield: stone_color</List.Item>
+                    <List.Item>Metafield: stone_clarity</List.Item>
                   </List>
                 </BlockStack>
                 <BlockStack gap="200">
