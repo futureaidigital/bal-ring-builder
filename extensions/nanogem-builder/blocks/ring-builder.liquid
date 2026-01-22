@@ -11,11 +11,13 @@
     {"type": "checkbox","id": "show_info_table","label": "Show product info table","default": true},
     {"type": "checkbox","id": "debug_mode","label": "Enable debug mode","default": false},
     {"type": "checkbox","id": "use_fallback","label": "Use fallback mode (bypass app proxy)","default": false},
-    {"type": "text","id": "gemstone_button_text","label": "Button text for gemstones","default": "Select a Setting →"},
+    {"type": "text","id": "add_to_ring_text","label": "Add to Ring button text","default": "Add to Ring"},
+    {"type": "text","id": "add_to_pendant_text","label": "Add to Pendant button text","default": "Add to Pendant"},
     {"type": "text","id": "setting_button_text","label": "Button text for settings","default": "Select a Gemstone →"},
     {"type": "text","id": "add_both_text","label": "Button text when both selected","default": "Add Both to Cart"},
-    {"type": "text","id": "gemstone_collection","label": "Gemstone collection handle","default": "gemstones"},
-    {"type": "text","id": "settings_collection","label": "Settings collection handle","default": "settings"}
+    {"type": "text","id": "gemstone_collection","label": "Gemstone collection handle","default": "loose-white-lab-grown-diamonds"},
+    {"type": "text","id": "ring_settings_collection","label": "Ring Settings collection handle","default": "ring-settings"},
+    {"type": "text","id": "pendant_settings_collection","label": "Pendant Settings collection handle","default": "pendant-settings"}
   ]
 }
 {% endschema %}
@@ -118,32 +120,53 @@
         
         {%- if has_both -%}
           <div class="rb-selected" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#0369a1;">
-            <strong>Selected {% if is_gem %}setting{% else %}gemstone{% endif %}:</strong> 
+            <strong>Selected {% if is_gem %}setting{% else %}gemstone{% endif %}:</strong>
             {% if is_gem %}{{ url_setting | replace: '-', ' ' }}{% else %}{{ url_gemstone | replace: '-', ' ' }}{% endif %}
           </div>
-        {%- endif -%}
-        
-        <button type="button" 
-                class="button button--full-width"
-                onclick="handleRingBuilderClick()"
-                style="margin-top: 10px;">
-          {%- if has_both -%}
+          <button type="button"
+                  class="button button--full-width"
+                  onclick="handleRingBuilderClick('both')"
+                  style="margin-top: 10px;">
             {{ block.settings.add_both_text }}
-          {%- elsif is_gem -%}
-            {{ block.settings.gemstone_button_text }}
-          {%- else -%}
+          </button>
+        {%- elsif is_gem -%}
+          <!-- Two buttons for gemstones: Add to Ring / Add to Pendant -->
+          <div class="rb-jewelry-choice" style="display:flex;gap:10px;margin-top:10px;">
+            <button type="button"
+                    class="button button--full-width"
+                    onclick="handleRingBuilderClick('ring')"
+                    style="flex:1;">
+              {{ block.settings.add_to_ring_text }}
+            </button>
+            <button type="button"
+                    class="button button--full-width button--secondary"
+                    onclick="handleRingBuilderClick('pendant')"
+                    style="flex:1;">
+              {{ block.settings.add_to_pendant_text }}
+            </button>
+          </div>
+        {%- else -%}
+          <button type="button"
+                  class="button button--full-width"
+                  onclick="handleRingBuilderClick('gemstone')"
+                  style="margin-top: 10px;">
             {{ block.settings.setting_button_text }}
-          {%- endif -%}
-        </button>
+          </button>
+        {%- endif -%}
         <script>
-        function handleRingBuilderClick() {
-          alert('NEW CODE IS RUNNING!');
-          // Only show debug if debug mode is enabled
+        function handleRingBuilderClick(mode) {
+          // mode can be: 'ring', 'pendant', 'gemstone', or 'both'
           const debugMode = {{ block.settings.debug_mode | default: false | json }};
-          
+
           const isGem = {{ is_gem | json }};
           const isBoth = {{ has_both | json }};
-          
+          const handle = '{{ product.handle }}';
+
+          // Collection handles from settings
+          const ringCollection = '{{ block.settings.ring_settings_collection }}';
+          const pendantCollection = '{{ block.settings.pendant_settings_collection }}';
+          const gemstoneCollection = '{{ block.settings.gemstone_collection }}';
+
           // Function to show debug and wait
           function showDebugAndWait(debugInfo, finalUrl) {
             let debugDiv = document.getElementById('rb-debug');
@@ -170,13 +193,13 @@
               `;
               document.body.appendChild(debugDiv);
             }
-            
+
             debugDiv.innerHTML = debugInfo;
-            
+
             // Add buttons
             const buttonDiv = document.createElement('div');
             buttonDiv.style.marginTop = '15px';
-            
+
             const continueBtn = document.createElement('button');
             continueBtn.textContent = 'CONTINUE →';
             continueBtn.style.cssText = `
@@ -191,7 +214,7 @@
             continueBtn.onclick = () => {
               window.location.href = finalUrl;
             };
-            
+
             const closeBtn = document.createElement('button');
             closeBtn.textContent = 'CANCEL';
             closeBtn.style.cssText = `
@@ -204,117 +227,136 @@
             closeBtn.onclick = () => {
               debugDiv.remove();
             };
-            
+
             buttonDiv.appendChild(continueBtn);
             buttonDiv.appendChild(closeBtn);
             debugDiv.appendChild(buttonDiv);
           }
-          
+
           // Start building debug info
           let debugInfo = '<strong>🐛 RING BUILDER DEBUG</strong><br>';
           debugInfo += `Time: ${new Date().toLocaleTimeString()}<br>`;
           debugInfo += `Current URL: ${window.location.href}<br>`;
+          debugInfo += `Mode: ${mode}<br>`;
           debugInfo += `Is Gem: ${isGem}<br>`;
           debugInfo += `Has Both: ${isBoth}<br>`;
           debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
-          
-          if (isBoth) {
-            const currentParams = new URLSearchParams(window.location.search);
+
+          // Get FRESH params at click time
+          const currentParams = new URLSearchParams(window.location.search);
+
+          if (mode === 'both') {
+            // Navigate to preview with both items
             const cleanParams = new URLSearchParams();
-            
-            debugInfo += 'MODE: Has Both<br>';
+
+            debugInfo += 'MODE: Has Both - Going to Preview<br>';
             debugInfo += `Gemstone: ${currentParams.get('gemstone') || 'none'}<br>`;
             debugInfo += `Setting: ${currentParams.get('setting') || 'none'}<br>`;
             debugInfo += `Setting Variant: ${currentParams.get('setting_variant') || 'none'}<br>`;
-            
+
             if (currentParams.get('gemstone')) cleanParams.set('gemstone', currentParams.get('gemstone'));
             if (currentParams.get('setting')) cleanParams.set('setting', currentParams.get('setting'));
             if (currentParams.get('setting_variant')) cleanParams.set('setting_variant', currentParams.get('setting_variant'));
-            
+
             const previewUrl = '/products/custom-ring-preview?' + cleanParams.toString();
             debugInfo += `<br>REDIRECT TO: ${previewUrl}`;
-            
+
             if (debugMode) {
               showDebugAndWait(debugInfo, previewUrl);
             } else {
               window.location.href = previewUrl;
             }
-            
-          } else {
-            const collection = isGem ? '{{ block.settings.settings_collection }}' : '{{ block.settings.gemstone_collection }}';
-            const paramName = isGem ? 'gemstone' : 'setting';
-            const handle = '{{ product.handle }}';
-            
-            debugInfo += `MODE: Single Selection<br>`;
+
+          } else if (mode === 'ring' || mode === 'pendant') {
+            // Gemstone selected, navigating to ring or pendant settings
+            const collection = mode === 'ring' ? ringCollection : pendantCollection;
+
+            debugInfo += `MODE: Gemstone → ${mode === 'ring' ? 'Ring' : 'Pendant'} Settings<br>`;
             debugInfo += `Product Handle: ${handle}<br>`;
             debugInfo += `Collection: ${collection}<br>`;
             debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
-            
-            // Get FRESH params at click time
-            const currentParams = new URLSearchParams(window.location.search);
-            
-            debugInfo += `<strong>CHECKING VARIANTS:</strong><br>`;
-            
-            // Get current variant from the FRESH URL
+
+            // Get current variant
             let currentVariant = currentParams.get('variant');
-            debugInfo += `URL variant param: ${currentVariant || 'none'}<br>`;
-            
-            // Check all possible variant sources
             const formInput = document.querySelector('input[name="id"]');
             const radioInput = document.querySelector('[name="id"]:checked');
             const selectInput = document.querySelector('select[name="id"]');
-            
+
+            debugInfo += `<strong>CHECKING VARIANTS:</strong><br>`;
+            debugInfo += `URL variant param: ${currentVariant || 'none'}<br>`;
             debugInfo += `Form input value: ${formInput?.value || 'not found'}<br>`;
-            debugInfo += `Radio checked value: ${radioInput?.value || 'not found'}<br>`;
-            debugInfo += `Select value: ${selectInput?.value || 'not found'}<br>`;
-            
-            // Also check variant picker forms
-            const variantForm = document.querySelector('form[action*="cart/add"]');
-            if (variantForm) {
-              const variantInput = variantForm.querySelector('[name="id"]');
-              debugInfo += `Cart form variant: ${variantInput?.value || 'not found'}<br>`;
-            }
-            
-            // Only fall back to form input if no URL variant
+
             if (!currentVariant) {
               currentVariant = formInput?.value || radioInput?.value || selectInput?.value;
               debugInfo += `Using form variant: ${currentVariant || 'none'}<br>`;
             }
-            
+
             debugInfo += `<strong style="color:#ff0">FINAL VARIANT: ${currentVariant || 'NONE!'}</strong><br>`;
             debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
-            
-            // Build completely clean URL
+
+            // Build URL with gemstone info
             const cleanParams = new URLSearchParams();
-            cleanParams.set(paramName, handle);
-            
+            cleanParams.set('gemstone', handle);
+
             if (currentVariant) {
-              const variantParam = isGem ? 'gemstone_variant' : 'setting_variant';
-              cleanParams.set(variantParam, currentVariant);
-              debugInfo += `Setting ${variantParam}: ${currentVariant}<br>`;
+              cleanParams.set('gemstone_variant', currentVariant);
+              debugInfo += `Setting gemstone_variant: ${currentVariant}<br>`;
             }
-            
-            // Only preserve the opposite selection - use FRESH params
-            if (isGem && currentParams.get('setting')) {
-              cleanParams.set('setting', currentParams.get('setting'));
-              debugInfo += `Preserving setting: ${currentParams.get('setting')}<br>`;
-              if (currentParams.get('setting_variant')) {
-                cleanParams.set('setting_variant', currentParams.get('setting_variant'));
-                debugInfo += `Preserving setting_variant: ${currentParams.get('setting_variant')}<br>`;
-              }
-            } else if (!isGem && currentParams.get('gemstone')) {
+
+            const finalUrl = `/collections/${collection}?${cleanParams.toString()}`;
+            debugInfo += `<strong>FINAL URL:</strong><br>${finalUrl}`;
+
+            if (debugMode) {
+              showDebugAndWait(debugInfo, finalUrl);
+            } else {
+              window.location.href = finalUrl;
+            }
+
+          } else if (mode === 'gemstone') {
+            // Setting selected, navigating to gemstone collection
+            debugInfo += `MODE: Setting → Gemstones<br>`;
+            debugInfo += `Product Handle: ${handle}<br>`;
+            debugInfo += `Collection: ${gemstoneCollection}<br>`;
+            debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+
+            // Get current variant
+            let currentVariant = currentParams.get('variant');
+            const formInput = document.querySelector('input[name="id"]');
+            const radioInput = document.querySelector('[name="id"]:checked');
+            const selectInput = document.querySelector('select[name="id"]');
+
+            debugInfo += `<strong>CHECKING VARIANTS:</strong><br>`;
+            debugInfo += `URL variant param: ${currentVariant || 'none'}<br>`;
+
+            if (!currentVariant) {
+              currentVariant = formInput?.value || radioInput?.value || selectInput?.value;
+              debugInfo += `Using form variant: ${currentVariant || 'none'}<br>`;
+            }
+
+            debugInfo += `<strong style="color:#ff0">FINAL VARIANT: ${currentVariant || 'NONE!'}</strong><br>`;
+            debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+
+            // Build URL with setting info
+            const cleanParams = new URLSearchParams();
+            cleanParams.set('setting', handle);
+
+            if (currentVariant) {
+              cleanParams.set('setting_variant', currentVariant);
+              debugInfo += `Setting setting_variant: ${currentVariant}<br>`;
+            }
+
+            // Preserve any existing gemstone selection
+            if (currentParams.get('gemstone')) {
               cleanParams.set('gemstone', currentParams.get('gemstone'));
               debugInfo += `Preserving gemstone: ${currentParams.get('gemstone')}<br>`;
               if (currentParams.get('gemstone_variant')) {
                 cleanParams.set('gemstone_variant', currentParams.get('gemstone_variant'));
-                debugInfo += `Preserving gemstone_variant: ${currentParams.get('gemstone_variant')}<br>`;
               }
             }
-            
-            const finalUrl = `/collections/${collection}?${cleanParams.toString()}`;
-            debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+
+            const finalUrl = `/collections/${gemstoneCollection}?${cleanParams.toString()}`;
             debugInfo += `<strong>FINAL URL:</strong><br>${finalUrl}`;
-            
+
             if (debugMode) {
               showDebugAndWait(debugInfo, finalUrl);
             } else {
