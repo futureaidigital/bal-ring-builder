@@ -726,10 +726,22 @@ function generateProductsHTML(products, urlParams, currencyCode, moneyFormat) {
 }
 
 function getProductShape(product) {
+  // Helper to extract shape from title
+  const extractShapeFromTitle = (title) => {
+    const shapes = ['Round', 'Oval', 'Pear', 'Emerald', 'Cushion', 'Princess', 'Marquise', 'Radiant', 'Asscher', 'Heart'];
+    const titleUpper = (title || '').toUpperCase();
+    for (const shape of shapes) {
+      if (titleUpper.includes(shape.toUpperCase())) {
+        return shape;
+      }
+    }
+    return '';
+  };
+
   if (product.isGem) {
-    return product.metafields.stone_shape || '';
+    return product.metafields.stone_shape || extractShapeFromTitle(product.title) || '';
   }
-  return product.metafields.center_stone_shape || '';
+  return product.metafields.center_stone_shape || extractShapeFromTitle(product.title) || '';
 }
 
 function generateProductCard(product, urlParams, currencyCode, moneyFormat) {
@@ -1230,11 +1242,28 @@ function processDiamondCardData(product) {
     return typeValue;
   };
 
+  // Extract shape from product title as fallback (e.g., "1.02ct E VS1 ROUND" or "RADIANT LAB DIAMOND")
+  const extractShapeFromTitle = (title) => {
+    const shapes = ['Round', 'Oval', 'Pear', 'Emerald', 'Cushion', 'Princess', 'Marquise', 'Radiant', 'Asscher', 'Heart'];
+    const titleUpper = (title || '').toUpperCase();
+    for (const shape of shapes) {
+      if (titleUpper.includes(shape.toUpperCase())) {
+        return shape;
+      }
+    }
+    return '';
+  };
+
+  // Use metafield shape, or extract from title, or default to empty
+  const shapeFromMetafield = metafields.stone_shape || '';
+  const shapeFromTitle = extractShapeFromTitle(product.title);
+  const stoneShape = shapeFromMetafield || shapeFromTitle || '';
+
   return {
     diamondType: parseDiamondType(metafields.diamond_type),
     stoneColor: metafields.stone_color || '',
     stoneClarity: metafields.stone_clarity || '',
-    stoneShape: metafields.stone_shape || 'Round',
+    stoneShape: stoneShape,
     stoneWeight: metafields.stone_weight || '',
     stoneDimensions: metafields.stone_dimensions || '',
     cutGrade: metafields.cut_grade || '',
@@ -1247,7 +1276,7 @@ function processDiamondCardData(product) {
     isCertified: !!(certificationLab && certificationNumber),
     weightDisplay: metafields.stone_weight || '',
     // Generate title like "1.03ct D VS1 Round"
-    title: `${metafields.stone_weight || ''} ${metafields.stone_color || ''} ${metafields.stone_clarity || ''} ${metafields.stone_shape || ''}`.trim()
+    title: `${metafields.stone_weight || ''} ${metafields.stone_color || ''} ${metafields.stone_clarity || ''} ${stoneShape}`.trim()
   };
 }
 
