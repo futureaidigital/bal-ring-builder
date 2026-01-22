@@ -2,7 +2,7 @@
 
 client_id = "861670647fc1eb154ee04bf998a680e0"
 name = "Bal Ring Builder"
-application_url = "https://example.com"
+application_url = "https://bal-ring-builder.onrender.com"
 embedded = true
 handle = "bal-ring-builder"
 
@@ -42,13 +42,13 @@ scopes = "read_customers,read_inventory,read_price_rules,read_product_listings,r
 
 [auth]
 redirect_urls = [
-  "https://example.com/auth/callback",
-  "https://example.com/auth/shopify/callback",
-  "https://example.com/api/auth/callback"
+  "https://bal-ring-builder.onrender.com/auth/callback",
+  "https://bal-ring-builder.onrender.com/auth/shopify/callback",
+  "https://bal-ring-builder.onrender.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://example.com/api"
+url = "https://bal-ring-builder.onrender.com/api"
 subpath = "nanogem-builder"
 prefix = "apps"
 
