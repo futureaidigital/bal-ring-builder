@@ -3,7 +3,7 @@
 client_id = "3b8bd22b40cfd8f3b4a87b1a432c1b08"
 name = "NanoGem Ring Builder"
 handle = "nanogem-builder"
-application_url = "https://dee-commit-performer-agents.trycloudflare.com"
+application_url = "https://bal-ring-builder.onrender.com"
 embedded = true
 
 [build]
@@ -42,10 +42,10 @@ api_version = "2025-04"
 scopes = "read_customers,read_inventory,read_price_rules,read_product_listings,read_products,read_themes,unauthenticated_read_product_listings,write_products"
 
 [auth]
-redirect_urls = ["https://dee-commit-performer-agents.trycloudflare.com/auth/callback", "https://dee-commit-performer-agents.trycloudflare.com/auth/shopify/callback", "https://dee-commit-performer-agents.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://bal-ring-builder.onrender.com/auth/callback", "https://bal-ring-builder.onrender.com/auth/shopify/callback", "https://bal-ring-builder.onrender.com/api/auth/callback"]
 
 [app_proxy]
-url = "https://dee-commit-performer-agents.trycloudflare.com/api"
+url = "https://bal-ring-builder.onrender.com/api"
 subpath = "nanogem-builder"
 prefix = "apps"
 
