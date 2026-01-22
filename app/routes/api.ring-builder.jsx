@@ -347,68 +347,144 @@ function processVariants(variants) {
 }
 
 function processMetafields(product) {
+  // Parse certificate field (format: "IGI - LG737512445" -> lab: "IGI", number: "LG737512445")
+  const certificateValue = product.certificate?.value || '';
+  const certParts = certificateValue.split(' - ');
+  const certLab = certParts[0] || '';
+  const certNumber = certParts[1] || '';
+
+  // Parse shape from metaobject reference (format: "center_stone_shape.round" -> "Round")
+  const parseShape = (shapeValue) => {
+    if (!shapeValue) return '';
+    // Handle metaobject reference format like "center_stone_shape.round"
+    if (shapeValue.includes('.')) {
+      const shapePart = shapeValue.split('.').pop();
+      return shapePart.charAt(0).toUpperCase() + shapePart.slice(1);
+    }
+    return shapeValue;
+  };
+
   return {
-    gemstone_type: product.gemstoneType?.value,
-    gemstone_weight: product.gemstoneWeight?.value,
-    gemstone_shape: product.gemstoneShape?.value,
-    gemstone_color: product.gemstoneColor?.value,
-    gemstone_treatment: product.gemstoneTreatment?.value,
-    gemstone_dimensions: product.gemstoneDimensions?.value,
-    gemstone_origin: product.gemstoneOrigin?.value, // ADD THIS
-    certification_laboratory: product.certificationLaboratory?.value, // ADD THIS
-    certification_number: product.certificationNumber?.value, // ADD THIS
-    center_stone_shape: product.centerStoneShape?.value,
+    // Diamond fields (mapped from new structure)
+    diamond_type: product.labDiamondType?.value,
+    stone_weight: product.stoneWeight?.value,
+    stone_shape: parseShape(product.stoneShape?.value),
+    stone_color: product.stoneColor?.value,
+    stone_clarity: product.stoneClarity?.value,
+    stone_dimensions: product.stoneDimensions?.value,
+    cut_grade: product.cutGrade?.value,
+    polish_grade: product.polishGrade?.value,
+    symmetry_grade: product.symmetryGrade?.value,
+    treatment: product.treatment?.value,
+    fluorescence: product.fluorescence?.value,
+    certification_laboratory: certLab,
+    certification_number: certNumber,
+    certificate_full: certificateValue,
+    // Setting fields
+    center_stone_shape: parseShape(product.centerStoneShape?.value),
     ring_style: product.ringStyle?.value,
-    metal_type: product.metalType?.value
+    metal_type: product.metalType?.value,
+    // Legacy mappings for backward compatibility
+    gemstone_type: product.labDiamondType?.value,
+    gemstone_weight: product.stoneWeight?.value,
+    gemstone_shape: parseShape(product.stoneShape?.value),
+    gemstone_color: product.stoneColor?.value,
+    gemstone_treatment: product.treatment?.value,
+    gemstone_dimensions: product.stoneDimensions?.value
   };
 }
 function processSettingData(product) {
   let minSize = 999.0;
   let maxSize = 0.0;
   const variantArray = [];
-  const metalTypes = new Set(); // Collect unique metal types
-  
+  const metalTypes = new Set();
+  const sideStoneInfo = {};
+
   product.variants.edges.forEach(vEdge => {
     const variant = vEdge.node;
-    
-    // Extract metal type from variant
-    const metalOption = variant.selectedOptions.find(opt => opt.name === 'Metal Type');
-    if (metalOption && metalOption.value) {
-      // Extract just the metal part (e.g., "18k White Gold" -> "White Gold")
-      const metalMatch = metalOption.value.match(/(White Gold|Yellow Gold|Rose Gold|Platinum)/i);
+
+    // Extract metal type from variant metafield or selectedOptions
+    const metalValue = variant.variantMetalType?.value;
+    if (metalValue) {
+      const metalMatch = metalValue.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Platinum)/i);
       if (metalMatch) {
         metalTypes.add(metalMatch[0]);
       }
-    }
-    
-    // Find the Size option
-    const sizeOption = variant.selectedOptions.find(opt => opt.name === 'Size');
-    
-    if (sizeOption && sizeOption.value.includes('ct')) {
-      const sizeRange = parseSizeRange(sizeOption.value);
-      
-      if (sizeRange) {
-        if (sizeRange.min < minSize) minSize = sizeRange.min;
-        if (sizeRange.max > maxSize) maxSize = sizeRange.max;
-        
-        variantArray.push({
-          id: extractId(variant.id),
-          min: sizeRange.min,
-          max: sizeRange.max
-        });
+    } else {
+      // Fallback to selectedOptions
+      const metalOption = variant.selectedOptions.find(opt => opt.name === 'Metal Type');
+      if (metalOption && metalOption.value) {
+        const metalMatch = metalOption.value.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Platinum)/i);
+        if (metalMatch) {
+          metalTypes.add(metalMatch[0]);
+        }
       }
     }
+
+    // Get carat weight range from variant metafield (e.g., "From 5 to 7.99 ct")
+    const caratWeight = variant.centerStoneCaratWeight?.value;
+    let sizeRange = null;
+
+    if (caratWeight) {
+      sizeRange = parseCaratWeightRange(caratWeight);
+    } else {
+      // Fallback to Size option
+      const sizeOption = variant.selectedOptions.find(opt => opt.name === 'Size');
+      if (sizeOption && sizeOption.value.includes('ct')) {
+        sizeRange = parseSizeRange(sizeOption.value);
+      }
+    }
+
+    if (sizeRange) {
+      if (sizeRange.min < minSize) minSize = sizeRange.min;
+      if (sizeRange.max > maxSize) maxSize = sizeRange.max;
+
+      variantArray.push({
+        id: extractId(variant.id),
+        min: sizeRange.min,
+        max: sizeRange.max,
+        metalType: variant.variantMetalType?.value || '',
+        metalWeight: variant.metalWeight?.value || '',
+        centerStoneShape: variant.variantCenterStoneShape?.value || ''
+      });
+    }
+
+    // Collect side stone info (same across variants typically)
+    if (variant.sideStoneType?.value && !sideStoneInfo.type) {
+      sideStoneInfo.type = variant.sideStoneType.value;
+      sideStoneInfo.shape = variant.sideStoneShape?.value || '';
+      sideStoneInfo.quality = variant.sideStoneQuality?.value || '';
+      sideStoneInfo.totalWeight = variant.sideStoneTotalWeight?.value || '';
+    }
   });
-  
-  // Join metal types or pick the first one
+
   const metalType = Array.from(metalTypes).join(', ');
-  
+
   return {
     settingMinSize: minSize !== 999.0 ? minSize.toString() : '',
     settingMaxSize: maxSize > 0 ? maxSize.toString() : '',
     variantData: variantArray.length > 0 ? JSON.stringify(variantArray) : '',
-    metalType: metalType // Add this
+    metalType: metalType,
+    sideStoneInfo: Object.keys(sideStoneInfo).length > 0 ? sideStoneInfo : null
   };
+}
+
+// Parse carat weight range from metafield (format: "From 5 to 7.99 ct" or "From 3 to 4.99 ct")
+function parseCaratWeightRange(weightString) {
+  if (!weightString) return null;
+
+  // Match "From X to Y ct" or "From X to Y carats"
+  const match = weightString.match(/from\s+([\d.]+)\s+to\s+([\d.]+)/i);
+  if (match) {
+    const min = parseFloat(match[1]);
+    const max = parseFloat(match[2]);
+    if (min > 0 && max > 0) {
+      return { min, max };
+    }
+  }
+
+  // Fallback to simple range format "X-Y ct"
+  return parseSizeRange(weightString);
 }
 function parseSizeRange(sizeString) {
   const sizeParts = sizeString.replace(' ct', '').split('-');
@@ -538,21 +614,25 @@ function generateProductsHTML(products, urlParams, currencyCode, moneyFormat) {
     const productType = product.isGem ? 'gemstone' : (product.isSet ? 'setting' : 'other');
     
     return `
-      <div class="ge-item" 
-          data-product-id="${product.id}" 
-          data-product-type="${productType}" 
-          data-shape="${getProductShape(product)}" 
-          data-color="${product.metafields.gemstone_color || ''}" 
-          data-gemstone-type="${product.metafields.gemstone_type || ''}" 
-          data-carat="${product.metafields.gemstone_weight || ''}" 
-          data-treatment="${product.metafields.gemstone_treatment || ''}" 
-          data-metal="${product.metafields.metal_type || ''}" 
-          data-style="${product.metafields.ring_style || ''}" 
-          data-carat="${product.settingMinSize && product.settingMaxSize ? product.settingMinSize + '-' + product.settingMaxSize : ''}"
-          data-carat-min="${product.settingMinSize || ''}" 
+      <div class="ge-item"
+          data-product-id="${product.id}"
+          data-product-type="${productType}"
+          data-shape="${getProductShape(product)}"
+          data-color="${product.metafields.stone_color || ''}"
+          data-clarity="${product.metafields.stone_clarity || ''}"
+          data-diamond-type="${product.metafields.diamond_type || ''}"
+          data-carat="${product.metafields.stone_weight || ''}"
+          data-treatment="${product.metafields.treatment || ''}"
+          data-cut="${product.metafields.cut_grade || ''}"
+          data-polish="${product.metafields.polish_grade || ''}"
+          data-symmetry="${product.metafields.symmetry_grade || ''}"
+          data-fluorescence="${product.metafields.fluorescence || ''}"
+          data-metal="${product.metafields.metal_type || ''}"
+          data-style="${product.metafields.ring_style || ''}"
+          data-carat-range="${product.settingMinSize && product.settingMaxSize ? product.settingMinSize + '-' + product.settingMaxSize : ''}"
+          data-carat-min="${product.settingMinSize || ''}"
           data-carat-max="${product.settingMaxSize || ''}"
           data-price="${product.price}"
-          data-origin="${product.metafields.gemstone_origin || ''}"
           data-certification="${product.metafields.certification_laboratory || ''}"
           ${product.variantData ? `data-variant-map='${product.variantData}'` : ''}>
         
@@ -564,7 +644,7 @@ function generateProductsHTML(products, urlParams, currencyCode, moneyFormat) {
 
 function getProductShape(product) {
   if (product.isGem) {
-    return product.metafields.gemstone_shape || '';
+    return product.metafields.stone_shape || '';
   }
   return product.metafields.center_stone_shape || '';
 }
@@ -1045,23 +1125,45 @@ function processSettingsCardData(product) {
     metalColors // NEW
   };
 }
-function processGemstoneCardData(product) {
+function processDiamondCardData(product) {
   const metafields = product.metafields;
   const certificationLab = metafields.certification_laboratory || '';
   const certificationNumber = metafields.certification_number || '';
-  
-  return {
-    gemstoneType: metafields.gemstone_type || 'Gemstone',
-    gemstoneColor: metafields.gemstone_color || 'Natural',
-    gemstoneTreatment: metafields.gemstone_treatment || 'Natural',
-    gemstoneShape: metafields.gemstone_shape || 'Round',
-    gemstoneWeight: metafields.gemstone_weight || '1.00',
-    gemstoneDimensions: metafields.gemstone_dimensions || '',
-    certificationLab,
-    isCertified: !!(certificationLab && certificationNumber),
-    weightDisplay: `${metafields.gemstone_weight || '1.00'} ct`,
-    title: `${metafields.gemstone_type || 'Gemstone'} - ${metafields.gemstone_weight || '1.00'}ct`
+
+  // Parse diamond type from metaobject reference (e.g., "diamond_type.white-lab-diamond" -> "White Lab Diamond")
+  const parseDiamondType = (typeValue) => {
+    if (!typeValue) return 'Lab Diamond';
+    if (typeValue.includes('.')) {
+      const typePart = typeValue.split('.').pop();
+      return typePart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+    return typeValue;
   };
+
+  return {
+    diamondType: parseDiamondType(metafields.diamond_type),
+    stoneColor: metafields.stone_color || '',
+    stoneClarity: metafields.stone_clarity || '',
+    stoneShape: metafields.stone_shape || 'Round',
+    stoneWeight: metafields.stone_weight || '',
+    stoneDimensions: metafields.stone_dimensions || '',
+    cutGrade: metafields.cut_grade || '',
+    polishGrade: metafields.polish_grade || '',
+    symmetryGrade: metafields.symmetry_grade || '',
+    fluorescence: metafields.fluorescence || '',
+    treatment: metafields.treatment || '',
+    certificationLab,
+    certificationNumber,
+    isCertified: !!(certificationLab && certificationNumber),
+    weightDisplay: metafields.stone_weight || '',
+    // Generate title like "1.03ct D VS1 Round"
+    title: `${metafields.stone_weight || ''} ${metafields.stone_color || ''} ${metafields.stone_clarity || ''} ${metafields.stone_shape || ''}`.trim()
+  };
+}
+
+// Keep legacy function name as alias for backward compatibility
+function processGemstoneCardData(product) {
+  return processDiamondCardData(product);
 }
 
 function extractMetalKarat(variants) {
@@ -1236,18 +1338,29 @@ function generateGalleryNavigation() {
   `;
 }
 
-function generateGemstoneSpecs(data) {
-  const specs = [
-    { label: 'Shape', value: data.gemstoneShape },
-    { label: 'Weight', value: data.weightDisplay },
-    { label: 'Treatment', value: data.gemstoneTreatment }
-  ];
-  if (data.gemstoneDimensions) {
-    specs.push({ label: 'Dimensions', value: data.gemstoneDimensions });
+function generateDiamondSpecs(data) {
+  const specs = [];
+
+  // Primary specs: Shape, Carat, Color, Clarity (the 4 C's focus)
+  if (data.stoneShape) specs.push({ label: 'Shape', value: data.stoneShape });
+  if (data.weightDisplay) specs.push({ label: 'Carat', value: data.weightDisplay });
+  if (data.stoneColor) specs.push({ label: 'Color', value: data.stoneColor });
+  if (data.stoneClarity) specs.push({ label: 'Clarity', value: data.stoneClarity });
+
+  // Cut grades
+  if (data.cutGrade) specs.push({ label: 'Cut', value: data.cutGrade });
+
+  // Certificate
+  if (data.isCertified) {
+    specs.push({ label: 'Certificate', value: data.certificationLab });
   }
-  specs.push({ label: 'Certificate', value: data.isCertified ? data.certificationLab : 'Uncertified' });
-  
+
   return generateSpecsHTML(specs);
+}
+
+// Legacy alias
+function generateGemstoneSpecs(data) {
+  return generateDiamondSpecs(data);
 }
 
 function generateSpecsHTML(specs) {
@@ -1353,21 +1466,35 @@ const COLLECTION_PRODUCTS_QUERY = `
                     name
                     value
                   }
+                  # Variant-level metafields for settings
+                  centerStoneCaratWeight: metafield(namespace: "custom", key: "center_stone_carat_weight") { value }
+                  variantMetalType: metafield(namespace: "custom", key: "metal_type") { value }
+                  metalWeight: metafield(namespace: "custom", key: "metal_weight") { value }
+                  sideStoneType: metafield(namespace: "custom", key: "side_stones_type") { value }
+                  sideStoneShape: metafield(namespace: "custom", key: "side_stones_shape") { value }
+                  sideStoneQuality: metafield(namespace: "custom", key: "side_stones_quality") { value }
+                  sideStoneTotalWeight: metafield(namespace: "custom", key: "side_stones_total_carat_weight") { value }
+                  variantCenterStoneShape: metafield(namespace: "custom", key: "center_stone_shape") { value }
                 }
               }
             }
-            gemstoneType: metafield(namespace: "custom", key: "gemstone_type") { value }
-            gemstoneWeight: metafield(namespace: "custom", key: "gemstone_weight") { value }
-            gemstoneShape: metafield(namespace: "custom", key: "gemstone_shape") { value }
-            gemstoneColor: metafield(namespace: "custom", key: "gemstone_color") { value }
-            gemstoneTreatment: metafield(namespace: "custom", key: "gemstone_treatment") { value }
-            gemstoneDimensions: metafield(namespace: "custom", key: "gemstone_dimensions") { value }
+            # Diamond metafields
+            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") { value }
+            stoneWeight: metafield(namespace: "custom", key: "stone_weight") { value }
+            stoneShape: metafield(namespace: "custom", key: "stone_shape") { value }
+            stoneColor: metafield(namespace: "custom", key: "stone_color") { value }
+            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") { value }
+            stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") { value }
+            cutGrade: metafield(namespace: "custom", key: "cut_grade") { value }
+            polishGrade: metafield(namespace: "custom", key: "polish_grade") { value }
+            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") { value }
+            treatment: metafield(namespace: "custom", key: "treatment") { value }
+            certificate: metafield(namespace: "custom", key: "certificate") { value }
+            fluorescence: metafield(namespace: "custom", key: "fluorescence") { value }
+            # Setting metafields
             centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") { value }
             ringStyle: metafield(namespace: "custom", key: "ring_style") { value }
             metalType: metafield(namespace: "custom", key: "metal_type") { value }
-            gemstoneOrigin: metafield(namespace: "custom", key: "gemstone_origin") { value }
-            certificationLaboratory: metafield(namespace: "custom", key: "certification_laboratory") { value }
-            certificationNumber: metafield(namespace: "custom", key: "certification_number") { value }
           }
         }
       }

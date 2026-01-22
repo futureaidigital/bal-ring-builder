@@ -56,25 +56,20 @@ export const loader: LoaderFunction = async ({ request }) => {
                 }
               }
             }
-            # All gemstone metafields
-            gemstoneType: metafield(namespace: "custom", key: "gemstone_type") { value }
-            gemstoneShape: metafield(namespace: "custom", key: "gemstone_shape") { value }
-            gemstoneWeight: metafield(namespace: "custom", key: "gemstone_weight") { value }
-            gemstoneColor: metafield(namespace: "custom", key: "gemstone_color") { value }
-            gemstoneDimensions: metafield(namespace: "custom", key: "gemstone_dimensions") { value }
-            gemstoneTreatment: metafield(namespace: "custom", key: "gemstone_treatment") { value }
-            gemstoneOrigin: metafield(namespace: "custom", key: "gemstone_origin") { value }
-            gemstoneClarity: metafield(namespace: "custom", key: "gemstone_clarity") { value }
-            certificationLaboratory: metafield(namespace: "custom", key: "certification_laboratory") { value }
-            certificationNumber: metafield(namespace: "custom", key: "certification_number") { value }
-            certificationDate: metafield(namespace: "custom", key: "certification_date") { value }
-            # Additional details
-            stoneCut: metafield(namespace: "custom", key: "stone_cut") { value }
+            # Diamond metafields
+            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") { value }
+            stoneShape: metafield(namespace: "custom", key: "stone_shape") { value }
+            stoneWeight: metafield(namespace: "custom", key: "stone_weight") { value }
+            stoneColor: metafield(namespace: "custom", key: "stone_color") { value }
+            stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") { value }
+            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") { value }
+            treatment: metafield(namespace: "custom", key: "treatment") { value }
+            certificate: metafield(namespace: "custom", key: "certificate") { value }
+            # Cut details
+            cutGrade: metafield(namespace: "custom", key: "cut_grade") { value }
+            polishGrade: metafield(namespace: "custom", key: "polish_grade") { value }
+            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") { value }
             fluorescence: metafield(namespace: "custom", key: "fluorescence") { value }
-            polish: metafield(namespace: "custom", key: "polish") { value }
-            symmetry: metafield(namespace: "custom", key: "symmetry") { value }
-            depthPercentage: metafield(namespace: "custom", key: "depth_percentage") { value }
-            tablePercentage: metafield(namespace: "custom", key: "table_percentage") { value }
           }
         }
       `,
@@ -95,32 +90,55 @@ export const loader: LoaderFunction = async ({ request }) => {
     const currency = product.priceRangeV2.minVariantPrice.currencyCode;
     const firstVariant = product.variants.edges[0]?.node;
     
-    // Collect all metafields
+    // Parse shape from metaobject reference (format: "center_stone_shape.round" -> "Round")
+    const parseShape = (shapeValue: string | undefined) => {
+      if (!shapeValue) return '';
+      if (shapeValue.includes('.')) {
+        const shapePart = shapeValue.split('.').pop() || '';
+        return shapePart.charAt(0).toUpperCase() + shapePart.slice(1);
+      }
+      return shapeValue;
+    };
+
+    // Parse diamond type from metaobject reference
+    const parseDiamondType = (typeValue: string | undefined) => {
+      if (!typeValue) return product.productType || 'Lab Diamond';
+      if (typeValue.includes('.')) {
+        const typePart = typeValue.split('.').pop() || '';
+        return typePart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+      return typeValue;
+    };
+
+    // Parse certificate (format: "IGI - LG737512445")
+    const certificateValue = product.certificate?.value || '';
+    const certParts = certificateValue.split(' - ');
+    const certLab = certParts[0] || '';
+    const certNumber = certParts[1] || '';
+
+    // Collect all metafields - Updated for diamonds
     const metafields = {
-      // Basic Info
-      type: product.gemstoneType?.value || product.productType,
-      shape: product.gemstoneShape?.value,
-      weight: product.gemstoneWeight?.value,
-      color: product.gemstoneColor?.value,
-      clarity: product.gemstoneClarity?.value,
-      dimensions: product.gemstoneDimensions?.value,
-      
-      // Treatment & Origin
-      treatment: product.gemstoneTreatment?.value,
-      origin: product.gemstoneOrigin?.value,
-      
+      // Basic Info (4 C's)
+      type: parseDiamondType(product.labDiamondType?.value),
+      shape: parseShape(product.stoneShape?.value),
+      weight: product.stoneWeight?.value,
+      color: product.stoneColor?.value,
+      clarity: product.stoneClarity?.value,
+      dimensions: product.stoneDimensions?.value,
+
+      // Treatment (CVD/HPHT for lab diamonds)
+      treatment: product.treatment?.value,
+
       // Cut Details
-      cut: product.stoneCut?.value,
-      polish: product.polish?.value,
-      symmetry: product.symmetry?.value,
+      cut: product.cutGrade?.value,
+      polish: product.polishGrade?.value,
+      symmetry: product.symmetryGrade?.value,
       fluorescence: product.fluorescence?.value,
-      depth: product.depthPercentage?.value,
-      table: product.tablePercentage?.value,
-      
+
       // Certification
-      laboratory: product.certificationLaboratory?.value,
-      certNumber: product.certificationNumber?.value,
-      certDate: product.certificationDate?.value,
+      laboratory: certLab,
+      certNumber: certNumber,
+      certificateFull: certificateValue,
     };
     
     const html = `
@@ -129,7 +147,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
       <meta charset="UTF-8">
-      <title>${product.title} - Gemstone Details</title>
+      <title>${product.title} - Diamond Details</title>
       <style>
         * {
           margin: 0;
@@ -599,7 +617,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       <!-- Action Buttons -->
       <div class="action-buttons">
         <button class="action-button select-button" onclick="selectGemstone()">
-          Select This Gemstone
+          Select This Diamond
         </button>
         <button class="action-button compare-button" onclick="compareGemstone()">
           Compare
@@ -723,7 +741,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       <body>
         <div class="error">
           <h1>Unable to Load Details</h1>
-          <p>We couldn't load the gemstone details.</p>
+          <p>We couldn't load the diamond details.</p>
           <button class="button" onclick="window.history.back()">Go Back</button>
         </div>
       </body>

@@ -1,10 +1,13 @@
 import { authenticate } from "../shopify.server";
 
-// Constants
-const GEMSTONE_TYPES = ['precious stone'];
-const SETTING_TYPES = ['ring', 'pendant'];
-const GEMSTONE_TAGS = ['gemstone'];
-const SETTING_TAGS = ['Setting_Ring', 'Setting_Pendant'];
+// Constants - Updated for diamonds
+const DIAMOND_TYPES = ['precious stone', 'loose stone'];
+const SETTING_TYPES = ['ring', 'pendant', 'ring setting', 'pendant setting'];
+const DIAMOND_TAGS = ['gemstone', 'loose stone', 'white lab diamond', 'lab diamond'];
+const SETTING_TAGS = ['Setting_Ring', 'Setting_Pendant', 'ring setting', 'pendant setting'];
+// Legacy aliases
+const GEMSTONE_TYPES = DIAMOND_TYPES;
+const GEMSTONE_TAGS = DIAMOND_TAGS;
 const PREVIEW_HANDLE = 'custom-ring-preview';
 
 // Main loader function
@@ -269,38 +272,48 @@ async function generatePreviewHTML({ settings, urlParams, admin, session }) {
     return await r.json();
   }
   
-  function createCombinedTable(gemstone, setting) {
+  function createCombinedTable(diamond, setting) {
     const d = document.createElement('div');
     d.className = 'rb-info';
-    
+
     const h3 = document.createElement('h3');
     h3.textContent = 'Ring Details';
     d.appendChild(h3);
-    
+
     const dl = document.createElement('dl');
-    
-    // Combined fields from both gemstone and setting
-    if (gemstone.metafields) {
-      const gm = gemstone.metafields;
-      
-      // Gemstone Type
-      if (gm.gemstone_type || gm.stone_type) {
-        ar(dl, 'Type', gm.gemstone_type || gm.stone_type);
+
+    // Combined fields from both diamond and setting
+    if (diamond.metafields) {
+      const dm = diamond.metafields;
+
+      // Diamond Shape
+      if (dm.stone_shape) {
+        ar(dl, 'Shape', dm.stone_shape);
       }
-      
-      // Weight
-      if (gm.gemstone_weight) {
-        ar(dl, 'Weight', gm.gemstone_weight + ' ct');
+
+      // Weight (Carat)
+      if (dm.stone_weight) {
+        ar(dl, 'Carat', dm.stone_weight);
       }
-      
-      // Shape
-      if (gm.gemstone_shape) {
-        ar(dl, 'Shape', gm.gemstone_shape);
-      }
-      
+
       // Color
-      if (gm.gemstone_color) {
-        ar(dl, 'Color', gm.gemstone_color);
+      if (dm.stone_color) {
+        ar(dl, 'Color', dm.stone_color);
+      }
+
+      // Clarity
+      if (dm.stone_clarity) {
+        ar(dl, 'Clarity', dm.stone_clarity);
+      }
+
+      // Cut Grade
+      if (dm.cut_grade) {
+        ar(dl, 'Cut', dm.cut_grade);
+      }
+
+      // Certificate
+      if (dm.certification_laboratory) {
+        ar(dl, 'Certificate', dm.certification_laboratory);
       }
     }
     

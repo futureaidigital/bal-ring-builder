@@ -87,43 +87,51 @@ export const loader = async ({ request }) => {
                 }
               }
             }
-            gemstoneType: metafield(namespace: "custom", key: "gemstone_type") {
+            # Diamond metafields
+            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") {
               value
             }
-            stoneType: metafield(namespace: "custom", key: "stone_type") {
+            stoneWeight: metafield(namespace: "custom", key: "stone_weight") {
               value
             }
-            gemstoneWeight: metafield(namespace: "custom", key: "gemstone_weight") {
+            stoneShape: metafield(namespace: "custom", key: "stone_shape") {
               value
             }
-            gemstoneShape: metafield(namespace: "custom", key: "gemstone_shape") {
+            stoneColor: metafield(namespace: "custom", key: "stone_color") {
               value
             }
-            gemstoneColor: metafield(namespace: "custom", key: "gemstone_color") {
+            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") {
               value
             }
-            gemstoneTreatment: metafield(namespace: "custom", key: "gemstone_treatment") {
+            stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") {
               value
             }
-            gemstoneOrigin: metafield(namespace: "custom", key: "gemstone_origin") {
+            cutGrade: metafield(namespace: "custom", key: "cut_grade") {
               value
             }
-            certificationLaboratory: metafield(namespace: "custom", key: "certification_laboratory") {
+            polishGrade: metafield(namespace: "custom", key: "polish_grade") {
               value
             }
+            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") {
+              value
+            }
+            treatment: metafield(namespace: "custom", key: "treatment") {
+              value
+            }
+            certificate: metafield(namespace: "custom", key: "certificate") {
+              value
+            }
+            fluorescence: metafield(namespace: "custom", key: "fluorescence") {
+              value
+            }
+            # Setting metafields
             centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") {
               value
             }
             ringStyle: metafield(namespace: "custom", key: "ring_style") {
               value
             }
-            productStyle: metafield(namespace: "custom", key: "product_style") {
-              value
-            }
             metalType: metafield(namespace: "custom", key: "metal_type") {
-              value
-            }
-            gemstoneDimensions: metafield(namespace: "custom", key: "gemstone_dimensions") {
               value
             }
           }
@@ -145,21 +153,53 @@ export const loader = async ({ request }) => {
     // Transform the data to a simpler format
     const product = data.productByHandle;
     
-    // Convert metafields to object
+    // Parse shape from metaobject reference (format: "center_stone_shape.round" -> "Round")
+    const parseShape = (shapeValue) => {
+      if (!shapeValue) return '';
+      if (shapeValue.includes('.')) {
+        const shapePart = shapeValue.split('.').pop();
+        return shapePart.charAt(0).toUpperCase() + shapePart.slice(1);
+      }
+      return shapeValue;
+    };
+
+    // Parse diamond type from metaobject reference
+    const parseDiamondType = (typeValue) => {
+      if (!typeValue) return '';
+      if (typeValue.includes('.')) {
+        const typePart = typeValue.split('.').pop();
+        return typePart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+      return typeValue;
+    };
+
+    // Parse certificate (format: "IGI - LG737512445")
+    const certificateValue = product.certificate?.value || '';
+    const certParts = certificateValue.split(' - ');
+    const certLab = certParts[0] || '';
+    const certNumber = certParts[1] || '';
+
+    // Convert metafields to object - Updated for diamonds
     const metafields = {
-      gemstone_type: product.gemstoneType?.value || product.stoneType?.value,
-      stone_type: product.stoneType?.value,
-      gemstone_weight: product.gemstoneWeight?.value,
-      gemstone_shape: product.gemstoneShape?.value,
-      gemstone_color: product.gemstoneColor?.value,
-      gemstone_treatment: product.gemstoneTreatment?.value,
-      gemstone_origin: product.gemstoneOrigin?.value,
-      certification_laboratory: product.certificationLaboratory?.value,
-      center_stone_shape: product.centerStoneShape?.value,
-      ring_style: product.ringStyle?.value || product.productStyle?.value,
-      product_style: product.productStyle?.value,
-      metal_type: product.metalType?.value,
-      gemstone_dimensions: product.gemstoneDimensions?.value
+      // Diamond fields
+      diamond_type: parseDiamondType(product.labDiamondType?.value),
+      stone_weight: product.stoneWeight?.value,
+      stone_shape: parseShape(product.stoneShape?.value),
+      stone_color: product.stoneColor?.value,
+      stone_clarity: product.stoneClarity?.value,
+      stone_dimensions: product.stoneDimensions?.value,
+      cut_grade: product.cutGrade?.value,
+      polish_grade: product.polishGrade?.value,
+      symmetry_grade: product.symmetryGrade?.value,
+      treatment: product.treatment?.value,
+      fluorescence: product.fluorescence?.value,
+      certification_laboratory: certLab,
+      certification_number: certNumber,
+      certificate_full: certificateValue,
+      // Setting fields
+      center_stone_shape: parseShape(product.centerStoneShape?.value),
+      ring_style: product.ringStyle?.value,
+      metal_type: product.metalType?.value
     };
     
     // Remove null/undefined values

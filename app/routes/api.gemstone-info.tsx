@@ -34,25 +34,31 @@ export const loader = async ({ request }) => {
       });
     }
 
-    // Fetch product metafields
+    // Fetch product metafields (updated for diamonds)
     const response = await admin.graphql(`
       query getProductMetafields($handle: String!) {
         productByHandle(handle: $handle) {
           title
-          gemstoneOrigin: metafield(namespace: "custom", key: "gemstone_origin") { value }
-          gemstoneTreatment: metafield(namespace: "custom", key: "gemstone_treatment") { value }
-          certificationLaboratory: metafield(namespace: "custom", key: "certification_laboratory") { value }
-          gemstoneType: metafield(namespace: "custom", key: "gemstone_type") { value }
-          gemstoneWeight: metafield(namespace: "custom", key: "gemstone_weight") { value }
-          gemstoneColor: metafield(namespace: "custom", key: "gemstone_color") { value }
-          certificationNumber: metafield(namespace: "custom", key: "certification_number") { value }
+          # Diamond metafields
+          labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") { value }
+          stoneWeight: metafield(namespace: "custom", key: "stone_weight") { value }
+          stoneShape: metafield(namespace: "custom", key: "stone_shape") { value }
+          stoneColor: metafield(namespace: "custom", key: "stone_color") { value }
+          stoneClarity: metafield(namespace: "custom", key: "stone_clarity") { value }
+          stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") { value }
+          cutGrade: metafield(namespace: "custom", key: "cut_grade") { value }
+          polishGrade: metafield(namespace: "custom", key: "polish_grade") { value }
+          symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") { value }
+          treatment: metafield(namespace: "custom", key: "treatment") { value }
+          certificate: metafield(namespace: "custom", key: "certificate") { value }
+          fluorescence: metafield(namespace: "custom", key: "fluorescence") { value }
         }
       }
     `, { variables: { handle: productHandle } });
 
     const data = await response.json();
     const product = data.data?.productByHandle;
-    
+
     if (!product) {
       return new Response(`
         <div style="text-align: center; padding: 40px; color: #666;">
@@ -66,23 +72,36 @@ export const loader = async ({ request }) => {
 
     console.log("✅ Product found:", product.title);
 
-    // Get metafield values
-    const origin = product.gemstoneOrigin?.value;
-    const treatment = product.gemstoneTreatment?.value;
-    const certificate = product.certificationLaboratory?.value;
-    
-    console.log("📋 Metafields:", { origin, treatment, certificate });
+    // Parse diamond type from metaobject reference
+    const parseDiamondType = (typeValue: string | undefined) => {
+      if (!typeValue) return 'Lab Diamond';
+      if (typeValue.includes('.')) {
+        const typePart = typeValue.split('.').pop() || '';
+        return typePart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+      return typeValue;
+    };
 
-    // Find matching definitions
-    const matchingValues = [];
-    if (origin) matchingValues.push({ name: origin, category: 'origin' });
+    // Parse certificate (format: "IGI - LG737512445")
+    const certificateValue = product.certificate?.value || '';
+    const certParts = certificateValue.split(' - ');
+    const certLab = certParts[0] || '';
+
+    // Get metafield values for diamond
+    const treatment = product.treatment?.value;
+    const certificate = certLab;
+
+    console.log("📋 Diamond Metafields:", { treatment, certificate });
+
+    // Find matching definitions (treatment and certificate for diamonds)
+    const matchingValues: Array<{name: string, category: string}> = [];
     if (treatment) matchingValues.push({ name: treatment, category: 'treatment' });
     if (certificate) matchingValues.push({ name: certificate, category: 'certificate' });
-    
+
     if (matchingValues.length === 0) {
       return new Response(`
         <div style="text-align: center; padding: 40px; color: #666;">
-          <h3>About This ${product.gemstoneType?.value || 'Gemstone'}</h3>
+          <h3>About This ${parseDiamondType(product.labDiamondType?.value)}</h3>
           <p>Detailed information is being updated.</p>
         </div>
       `, {
@@ -125,7 +144,7 @@ export const loader = async ({ request }) => {
     if (definitions.length === 0) {
       return new Response(`
         <div style="text-align: center; padding: 40px; color: #666;">
-          <h3>About This ${product.gemstoneType?.value || 'Gemstone'}</h3>
+          <h3>About This ${parseDiamondType(product.labDiamondType?.value)}</h3>
           <p>Information is being configured.</p>
         </div>
       `, {
