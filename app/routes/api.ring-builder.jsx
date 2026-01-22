@@ -379,10 +379,34 @@ function isGemstoneProduct(product) {
 }
 
 function isSettingProduct(product) {
-  return product.productType === 'Ring' || 
-         product.productType === 'Pendant' || 
-         product.tags.includes('Setting_Ring') || 
-         product.tags.includes('Setting_Pendant');
+  // Check product type
+  const productType = (product.productType || '').toLowerCase();
+  const isSettingType = productType === 'ring' ||
+                        productType === 'pendant' ||
+                        productType === 'setting' ||
+                        productType === 'settings' ||
+                        productType === 'mounting' ||
+                        productType === 'ring setting' ||
+                        productType === 'engagement ring' ||
+                        productType.includes('setting') ||
+                        productType.includes('mounting');
+
+  // Check tags for setting-related keywords
+  const hasSettingTag = product.tags.some(tag => {
+    const lowerTag = tag.toLowerCase();
+    return lowerTag === 'setting' ||
+           lowerTag === 'settings' ||
+           lowerTag === 'ring' ||
+           lowerTag === 'pendant' ||
+           lowerTag === 'mounting' ||
+           lowerTag === 'engagement' ||
+           lowerTag === 'setting_ring' ||
+           lowerTag === 'setting_pendant' ||
+           lowerTag.includes('setting') ||
+           lowerTag.includes('mounting');
+  });
+
+  return isSettingType || hasSettingTag;
 }
 
 function extractId(shopifyId) {
@@ -1228,15 +1252,9 @@ function generateDefaultCard(product, currencyCode = 'AED', moneyFormat = '{{amo
     return `${currencyCode} ${amount}`;
   };
 
-  // Use ge-item class so JavaScript can find these products too
+  // Note: ge-item wrapper is already provided by generateProductsHTML
   return `
-    <div class="ge-item def-card"
-         data-product-id="${product.id}"
-         data-product-type="other"
-         data-shape="${product.metafields?.stone_shape || ''}"
-         data-color="${product.metafields?.stone_color || ''}"
-         data-carat="${product.metafields?.stone_weight || ''}"
-         data-price="${product.price}">
+    <div class="def-card">
       <a href="/products/${product.handle}">
         ${product.featuredImage ?
           `<img src="${product.featuredImage}?width=300&height=300"
