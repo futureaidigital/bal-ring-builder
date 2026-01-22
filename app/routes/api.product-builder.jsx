@@ -242,11 +242,21 @@ function processProductData(product) {
   if (!product) return null;
 
   const metafields = {};
+  console.log('=== PRODUCT BUILDER METAFIELDS DEBUG ===');
   product.metafields?.edges?.forEach(edge => {
     const node = edge.node;
+    console.log(`Metafield ${node.key}:`, {
+      value: node.value,
+      type: node.type,
+      reference: node.reference,
+      references: node.references?.nodes
+    });
     // Use the helper to extract proper value from metaobject references
-    metafields[node.key] = getMetafieldValue(node);
+    const extractedValue = getMetafieldValue(node);
+    console.log(`  -> Extracted: "${extractedValue}"`);
+    metafields[node.key] = extractedValue;
   });
+  console.log('=== END METAFIELDS DEBUG ===');
   
   const variants = product.variants.edges.map(edge => {
     const variant = edge.node;
