@@ -411,69 +411,69 @@ function processMetafields(product) {
   const certLab = certParts[0] || '';
   const certNumber = certParts[1] || '';
 
-  // Parse shape from metaobject reference or clean metaobject GIDs
-  const parseShape = (shapeValue) => {
-    if (!shapeValue) return '';
+  // Extract value from metafield - handles both plain values and metaobject references
+  const getMetafieldValue = (metafield) => {
+    if (!metafield) return '';
 
-    // Convert to string if needed
-    const strValue = String(shapeValue);
-
-    // If it's a metaobject GID (gid://shopify/Metaobject/...) or JSON array containing one, return empty
-    // These need to be resolved via separate API call which we don't support yet
-    if (strValue.includes('gid://shopify/Metaobject') || strValue.includes('gid://shopify')) {
-      return '';
+    // First check if there's a resolved metaobject reference
+    if (metafield.reference) {
+      // Use displayName if available, otherwise handle
+      const ref = metafield.reference;
+      if (ref.displayName) return ref.displayName;
+      if (ref.handle) {
+        // Convert handle like "round" to "Round"
+        return ref.handle.charAt(0).toUpperCase() + ref.handle.slice(1).replace(/-/g, ' ');
+      }
     }
 
-    // Handle metaobject reference format like "center_stone_shape.round"
-    if (strValue.includes('.') && !strValue.startsWith('[')) {
-      const shapePart = strValue.split('.').pop();
-      return shapePart.charAt(0).toUpperCase() + shapePart.slice(1);
-    }
-
-    // If it starts with [ it's likely a JSON array, skip it
-    if (strValue.startsWith('[')) {
-      return '';
-    }
-
-    return strValue;
-  };
-
-  // Clean any value that might contain metaobject GIDs
-  const cleanMetaobjectValue = (value) => {
+    // Fall back to raw value
+    const value = metafield.value;
     if (!value) return '';
+
     const strValue = String(value);
-    // Skip metaobject GIDs and JSON arrays containing them
-    if (strValue.includes('gid://shopify') || strValue.startsWith('[')) return '';
+
+    // Skip metaobject GIDs that weren't resolved
+    if (strValue.includes('gid://shopify') || strValue.startsWith('[')) {
+      return '';
+    }
+
+    // Handle old format like "center_stone_shape.round"
+    if (strValue.includes('.') && !strValue.includes('://')) {
+      const parts = strValue.split('.');
+      const lastPart = parts.pop();
+      return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
+    }
+
     return strValue;
   };
 
   return {
-    // Diamond fields (mapped from new structure) - clean metaobject GIDs
-    diamond_type: cleanMetaobjectValue(product.labDiamondType?.value),
-    stone_weight: cleanMetaobjectValue(product.stoneWeight?.value),
-    stone_shape: parseShape(product.stoneShape?.value),
-    stone_color: cleanMetaobjectValue(product.stoneColor?.value),
-    stone_clarity: cleanMetaobjectValue(product.stoneClarity?.value),
-    stone_dimensions: cleanMetaobjectValue(product.stoneDimensions?.value),
-    cut_grade: cleanMetaobjectValue(product.cutGrade?.value),
-    polish_grade: cleanMetaobjectValue(product.polishGrade?.value),
-    symmetry_grade: cleanMetaobjectValue(product.symmetryGrade?.value),
-    treatment: cleanMetaobjectValue(product.treatment?.value),
-    fluorescence: cleanMetaobjectValue(product.fluorescence?.value),
+    // Diamond fields - use getMetafieldValue to resolve metaobject references
+    diamond_type: getMetafieldValue(product.labDiamondType),
+    stone_weight: getMetafieldValue(product.stoneWeight),
+    stone_shape: getMetafieldValue(product.stoneShape),
+    stone_color: getMetafieldValue(product.stoneColor),
+    stone_clarity: getMetafieldValue(product.stoneClarity),
+    stone_dimensions: getMetafieldValue(product.stoneDimensions),
+    cut_grade: getMetafieldValue(product.cutGrade),
+    polish_grade: getMetafieldValue(product.polishGrade),
+    symmetry_grade: getMetafieldValue(product.symmetryGrade),
+    treatment: getMetafieldValue(product.treatment),
+    fluorescence: getMetafieldValue(product.fluorescence),
     certification_laboratory: certLab,
     certification_number: certNumber,
     certificate_full: certificateValue,
     // Setting fields
-    center_stone_shape: parseShape(product.centerStoneShape?.value),
-    ring_style: cleanMetaobjectValue(product.ringStyle?.value),
-    metal_type: cleanMetaobjectValue(product.metalType?.value),
+    center_stone_shape: getMetafieldValue(product.centerStoneShape),
+    ring_style: getMetafieldValue(product.ringStyle),
+    metal_type: getMetafieldValue(product.metalType),
     // Legacy mappings for backward compatibility
-    gemstone_type: cleanMetaobjectValue(product.labDiamondType?.value),
-    gemstone_weight: cleanMetaobjectValue(product.stoneWeight?.value),
-    gemstone_shape: parseShape(product.stoneShape?.value),
-    gemstone_color: cleanMetaobjectValue(product.stoneColor?.value),
-    gemstone_treatment: product.treatment?.value,
-    gemstone_dimensions: product.stoneDimensions?.value
+    gemstone_type: getMetafieldValue(product.labDiamondType),
+    gemstone_weight: getMetafieldValue(product.stoneWeight),
+    gemstone_shape: getMetafieldValue(product.stoneShape),
+    gemstone_color: getMetafieldValue(product.stoneColor),
+    gemstone_treatment: getMetafieldValue(product.treatment),
+    gemstone_dimensions: getMetafieldValue(product.stoneDimensions)
   };
 }
 function processSettingData(product) {
@@ -726,22 +726,11 @@ function generateProductsHTML(products, urlParams, currencyCode, moneyFormat) {
 }
 
 function getProductShape(product) {
-  // Helper to extract shape from title
-  const extractShapeFromTitle = (title) => {
-    const shapes = ['Round', 'Oval', 'Pear', 'Emerald', 'Cushion', 'Princess', 'Marquise', 'Radiant', 'Asscher', 'Heart'];
-    const titleUpper = (title || '').toUpperCase();
-    for (const shape of shapes) {
-      if (titleUpper.includes(shape.toUpperCase())) {
-        return shape;
-      }
-    }
-    return '';
-  };
-
+  // Values should now be properly resolved from metaobject references
   if (product.isGem) {
-    return product.metafields.stone_shape || extractShapeFromTitle(product.title) || '';
+    return product.metafields.stone_shape || '';
   }
-  return product.metafields.center_stone_shape || extractShapeFromTitle(product.title) || '';
+  return product.metafields.center_stone_shape || '';
 }
 
 function generateProductCard(product, urlParams, currencyCode, moneyFormat) {
@@ -1232,38 +1221,15 @@ function processDiamondCardData(product) {
   const certificationLab = metafields.certification_laboratory || '';
   const certificationNumber = metafields.certification_number || '';
 
-  // Parse diamond type from metaobject reference (e.g., "diamond_type.white-lab-diamond" -> "White Lab Diamond")
-  const parseDiamondType = (typeValue) => {
-    if (!typeValue) return 'Lab Diamond';
-    if (typeValue.includes('.')) {
-      const typePart = typeValue.split('.').pop();
-      return typePart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-    return typeValue;
-  };
-
-  // Extract shape from product title as fallback (e.g., "1.02ct E VS1 ROUND" or "RADIANT LAB DIAMOND")
-  const extractShapeFromTitle = (title) => {
-    const shapes = ['Round', 'Oval', 'Pear', 'Emerald', 'Cushion', 'Princess', 'Marquise', 'Radiant', 'Asscher', 'Heart'];
-    const titleUpper = (title || '').toUpperCase();
-    for (const shape of shapes) {
-      if (titleUpper.includes(shape.toUpperCase())) {
-        return shape;
-      }
-    }
-    return '';
-  };
-
-  // Use metafield shape, or extract from title, or default to empty
-  const shapeFromMetafield = metafields.stone_shape || '';
-  const shapeFromTitle = extractShapeFromTitle(product.title);
-  const stoneShape = shapeFromMetafield || shapeFromTitle || '';
+  // Values should now be properly resolved from metaobject references
+  const stoneShape = metafields.stone_shape || '';
+  const diamondType = metafields.diamond_type || 'Lab Diamond';
 
   return {
-    diamondType: parseDiamondType(metafields.diamond_type),
+    diamondType,
     stoneColor: metafields.stone_color || '',
     stoneClarity: metafields.stone_clarity || '',
-    stoneShape: stoneShape,
+    stoneShape,
     stoneWeight: metafields.stone_weight || '',
     stoneDimensions: metafields.stone_dimensions || '',
     cutGrade: metafields.cut_grade || '',
@@ -1597,23 +1563,63 @@ const COLLECTION_PRODUCTS_QUERY = `
                 }
               }
             }
-            # Diamond metafields
-            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") { value }
+            # Diamond metafields - some may be metaobject references
+            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
             stoneWeight: metafield(namespace: "custom", key: "stone_weight") { value }
-            stoneShape: metafield(namespace: "custom", key: "stone_shape") { value }
-            stoneColor: metafield(namespace: "custom", key: "stone_color") { value }
-            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") { value }
+            stoneShape: metafield(namespace: "custom", key: "stone_shape") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
+            stoneColor: metafield(namespace: "custom", key: "stone_color") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
+            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
             stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") { value }
-            cutGrade: metafield(namespace: "custom", key: "cut_grade") { value }
+            cutGrade: metafield(namespace: "custom", key: "cut_grade") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
             polishGrade: metafield(namespace: "custom", key: "polish_grade") { value }
             symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") { value }
             treatment: metafield(namespace: "custom", key: "treatment") { value }
             certificate: metafield(namespace: "custom", key: "certificate") { value }
             fluorescence: metafield(namespace: "custom", key: "fluorescence") { value }
             # Setting metafields
-            centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") { value }
-            ringStyle: metafield(namespace: "custom", key: "ring_style") { value }
-            metalType: metafield(namespace: "custom", key: "metal_type") { value }
+            centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
+            ringStyle: metafield(namespace: "custom", key: "ring_style") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
+            metalType: metafield(namespace: "custom", key: "metal_type") {
+              value
+              reference {
+                ... on Metaobject { displayName handle }
+              }
+            }
           }
         }
       }
