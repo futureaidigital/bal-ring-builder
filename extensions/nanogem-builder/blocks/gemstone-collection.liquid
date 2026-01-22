@@ -35,11 +35,11 @@ endif
 unless is_rb
   if block.settings.auto_detect
     case ch
-      when 'gemstones','gemstone','stones','precious-stones','precious_stones','sapphires','rubies','emeralds','diamonds','loose-stones','loose-diamonds','white-lab-diamonds','lab-diamonds','setting','settings','ring-settings','ring_settings','pendant-settings','pendant_settings','mountings','rings','pendants'
+      when 'gemstones','gemstone','stones','precious-stones','precious_stones','sapphires','rubies','emeralds','diamonds','loose-stones','loose-diamonds','white-lab-diamonds','lab-diamonds','loose-white-lab-grown-diamonds','loose-blue-lab-grown-diamonds','loose-pink-lab-grown-diamonds','loose-yellow-lab-grown-diamonds','setting','settings','ring-settings','ring_settings','pendant-settings','pendant_settings','mountings','rings','pendants'
         assign is_rb = true
     endcase
     unless is_rb
-      assign gem_check = 'gemstone,sapphire,ruby,emerald,stone,diamond,loose,setting,mounting,ring,pendant'
+      assign gem_check = 'gemstone,sapphire,ruby,emerald,stone,diamond,loose,lab-grown,setting,mounting,ring,pendant'
       assign gem_words = gem_check | split: ','
       for word in gem_words
         if ch contains word
