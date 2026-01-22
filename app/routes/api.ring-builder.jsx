@@ -1777,133 +1777,23 @@ const COLLECTION_PRODUCTS_QUERY = `
                 }
               }
             }
-            # Diamond metafields - some may be metaobject references
-            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
+            # Diamond metafields - values only, GIDs resolved via fallback query
+            labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") { value }
             stoneWeight: metafield(namespace: "custom", key: "stone_weight") { value }
-            stoneShape: metafield(namespace: "custom", key: "stone_shape") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 1) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
-            stoneColor: metafield(namespace: "custom", key: "stone_color") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 1) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
-            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 1) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
+            stoneShape: metafield(namespace: "custom", key: "stone_shape") { value }
+            stoneColor: metafield(namespace: "custom", key: "stone_color") { value }
+            stoneClarity: metafield(namespace: "custom", key: "stone_clarity") { value }
             stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") { value }
-            cutGrade: metafield(namespace: "custom", key: "cut_grade") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
-            polishGrade: metafield(namespace: "custom", key: "polish_grade") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
-            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
+            cutGrade: metafield(namespace: "custom", key: "cut_grade") { value }
+            polishGrade: metafield(namespace: "custom", key: "polish_grade") { value }
+            symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") { value }
             treatment: metafield(namespace: "custom", key: "treatment") { value }
             certificate: metafield(namespace: "custom", key: "certificate") { value }
-            fluorescence: metafield(namespace: "custom", key: "fluorescence") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
+            fluorescence: metafield(namespace: "custom", key: "fluorescence") { value }
             # Setting metafields
-            centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
-            ringStyle: metafield(namespace: "custom", key: "ring_style") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
-            metalType: metafield(namespace: "custom", key: "metal_type") {
-              value
-              reference {
-                ... on Metaobject { displayName handle }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject { displayName handle }
-                }
-              }
-            }
+            centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") { value }
+            ringStyle: metafield(namespace: "custom", key: "ring_style") { value }
+            metalType: metafield(namespace: "custom", key: "metal_type") { value }
           }
         }
       }
