@@ -94,15 +94,16 @@ function classifyProduct(product) {
   const type = (product.type || '').toLowerCase();
   const tags = product.tags || [];
   const handle = product.handle || '';
-  
-  const tagLower = tags.map(t => t.toLowerCase());
-  
+
+  // Convert all tags to lowercase for comparison
+  const tagsLower = tags.map(t => t.toLowerCase());
+
   return {
     isPreview: handle === PREVIEW_HANDLE,
-    isGemstone: GEMSTONE_TYPES.includes(type) || 
-                tags.some(tag => GEMSTONE_TAGS.includes(tag.toLowerCase())),
-    isSetting: SETTING_TYPES.includes(type) || 
-               tags.some(tag => SETTING_TAGS.includes(tag))
+    isGemstone: GEMSTONE_TYPES.includes(type) ||
+                tagsLower.some(tag => GEMSTONE_TAGS.includes(tag)),
+    isSetting: SETTING_TYPES.includes(type) ||
+               tagsLower.some(tag => SETTING_TAGS.includes(tag))
   };
 }
 
