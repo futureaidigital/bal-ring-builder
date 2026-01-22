@@ -275,17 +275,45 @@ async function fetchCollectionProducts(admin, collectionHandle) {
 function processCollectionProducts(collection) {
   let hasGems = false;
   let hasSets = false;
-  
-  const products = collection.products.edges.map(edge => {
+  let gemCount = 0;
+  let setCount = 0;
+  let otherCount = 0;
+
+  console.log('=== PRODUCT CLASSIFICATION DEBUG ===');
+  console.log('Total products in collection:', collection.products.edges.length);
+
+  const products = collection.products.edges.map((edge, index) => {
     const product = edge.node;
     const processedProduct = processProduct(product);
-    
-    if (processedProduct.isGem) hasGems = true;
-    if (processedProduct.isSet) hasSets = true;
-    
+
+    // Debug logging for first 5 products
+    if (index < 5) {
+      console.log(`Product ${index + 1}:`, {
+        title: product.title,
+        productType: product.productType,
+        tags: product.tags,
+        isGem: processedProduct.isGem,
+        isSet: processedProduct.isSet
+      });
+    }
+
+    if (processedProduct.isGem) {
+      hasGems = true;
+      gemCount++;
+    } else if (processedProduct.isSet) {
+      hasSets = true;
+      setCount++;
+    } else {
+      otherCount++;
+    }
+
     return processedProduct;
   });
-  
+
+  console.log('=== CLASSIFICATION SUMMARY ===');
+  console.log('Gems:', gemCount, '| Settings:', setCount, '| Other:', otherCount);
+  console.log('=== END DEBUG ===');
+
   return { products, hasGems, hasSets };
 }
 
