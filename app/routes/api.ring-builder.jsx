@@ -405,6 +405,16 @@ function processVariants(variants) {
 }
 
 function processMetafields(product) {
+  // DEBUG: Log raw metafield data for first few products
+  if (product.title) {
+    console.log('=== METAFIELD DEBUG for:', product.title.substring(0, 50), '===');
+    console.log('stoneShape raw:', JSON.stringify(product.stoneShape));
+    console.log('stoneColor raw:', JSON.stringify(product.stoneColor));
+    console.log('stoneClarity raw:', JSON.stringify(product.stoneClarity));
+    console.log('stoneWeight raw:', JSON.stringify(product.stoneWeight));
+    console.log('labDiamondType raw:', JSON.stringify(product.labDiamondType));
+  }
+
   // Parse certificate field (format: "IGI - LG737512445" -> lab: "IGI", number: "LG737512445")
   const certificateValue = product.certificate?.value || '';
   const certParts = certificateValue.split(' - ');
@@ -447,7 +457,7 @@ function processMetafields(product) {
     return strValue;
   };
 
-  return {
+  const result = {
     // Diamond fields - use getMetafieldValue to resolve metaobject references
     diamond_type: getMetafieldValue(product.labDiamondType),
     stone_weight: getMetafieldValue(product.stoneWeight),
@@ -475,6 +485,19 @@ function processMetafields(product) {
     gemstone_treatment: getMetafieldValue(product.treatment),
     gemstone_dimensions: getMetafieldValue(product.stoneDimensions)
   };
+
+  // DEBUG: Log processed values
+  if (product.title) {
+    console.log('PROCESSED values:', {
+      shape: result.stone_shape,
+      color: result.stone_color,
+      clarity: result.stone_clarity,
+      weight: result.stone_weight,
+      type: result.diamond_type
+    });
+  }
+
+  return result;
 }
 function processSettingData(product) {
   let minSize = 999.0;
@@ -2561,19 +2584,41 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
         init() {
           console.log('RBA.init() called');
           console.log('Products in DOM:', document.querySelectorAll('.ge-item').length);
-          
+
+          // DEBUG: Log all product metafield data
+          console.log('=== PRODUCT METAFIELD DEBUG ===');
+          document.querySelectorAll('.ge-item').forEach((el, i) => {
+            if (i < 5) { // Only log first 5 products
+              console.log('Product ' + (i+1) + ':', {
+                id: el.dataset.productId,
+                type: el.dataset.productType,
+                shape: el.dataset.shape,
+                color: el.dataset.color,
+                clarity: el.dataset.clarity,
+                diamondType: el.dataset.diamondType,
+                carat: el.dataset.carat,
+                cut: el.dataset.cut,
+                polish: el.dataset.polish,
+                symmetry: el.dataset.symmetry,
+                fluorescence: el.dataset.fluorescence,
+                metal: el.dataset.metal
+              });
+            }
+          });
+          console.log('=== END METAFIELD DEBUG ===');
+
           this.parseUrlParams();
           console.log('URL params parsed:', this.st);
-          
+
           this.setupState();
           console.log('State setup complete');
-          
+
           this.initializeUI();
           console.log('UI initialized');
-          
+
           this.bindEvents();
           console.log('Events bound');
-          
+
           console.log('Init complete - visible products:', document.querySelectorAll('.ge-item:not(.hidden)').length);
         },
                 
