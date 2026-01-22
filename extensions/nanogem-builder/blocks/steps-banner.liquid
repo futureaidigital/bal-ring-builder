@@ -1,5 +1,5 @@
-{% assign gem_url = block.settings.gem_url | default: '/collections/gemstones' %}
-{% assign set_url = block.settings.set_url | default: '/collections/settings' %}
+{% assign gem_url = block.settings.gem_url | default: '/collections/loose-white-lab-grown-diamonds' %}
+{% assign set_url = block.settings.set_url | default: '/collections/ring-settings' %}
 {% assign show_on_gemstones = block.settings.show_on_gemstones %}
 {% assign show_on_settings = block.settings.show_on_settings %}
 {% assign should_show = false %}
@@ -298,7 +298,7 @@ else S{{ block.id | remove: '-' }}.init()
       "type": "text",
       "id": "set_url",
       "label": "Settings collection URL",
-      "default": "/collections/settings"
+      "default": "/collections/ring-settings"
     },
     {
       "type": "header",
