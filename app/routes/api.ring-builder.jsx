@@ -326,8 +326,28 @@ function processProduct(product) {
 }
 
 function isGemstoneProduct(product) {
-  return product.productType === 'Precious stone' || 
-         product.tags.includes('gemstone');
+  // Check product type
+  const productType = (product.productType || '').toLowerCase();
+  const isGemType = productType === 'precious stone' ||
+                    productType === 'diamond' ||
+                    productType === 'loose diamond' ||
+                    productType === 'lab diamond' ||
+                    productType === 'lab-grown diamond' ||
+                    productType.includes('diamond') ||
+                    productType.includes('stone');
+
+  // Check tags
+  const hasGemTag = product.tags.some(tag => {
+    const lowerTag = tag.toLowerCase();
+    return lowerTag === 'gemstone' ||
+           lowerTag === 'diamond' ||
+           lowerTag === 'loose-diamond' ||
+           lowerTag === 'loose diamond' ||
+           lowerTag === 'lab-grown' ||
+           lowerTag.includes('diamond');
+  });
+
+  return isGemType || hasGemTag;
 }
 
 function isSettingProduct(product) {
@@ -1076,15 +1096,22 @@ function generateDefaultCard(product, currencyCode = 'AED', moneyFormat = '{{amo
     }
     return `${currencyCode} ${amount}`;
   };
-  
+
+  // Use ge-item class so JavaScript can find these products too
   return `
-    <div class="def-card">
+    <div class="ge-item def-card"
+         data-product-id="${product.id}"
+         data-product-type="other"
+         data-shape="${product.metafields?.stone_shape || ''}"
+         data-color="${product.metafields?.stone_color || ''}"
+         data-carat="${product.metafields?.stone_weight || ''}"
+         data-price="${product.price}">
       <a href="/products/${product.handle}">
-        ${product.featuredImage ? 
-          `<img src="${product.featuredImage}?width=300&height=300" 
-                alt="${escapeHtml(product.title)}" 
-                loading="lazy" 
-                width="300" 
+        ${product.featuredImage ?
+          `<img src="${product.featuredImage}?width=300&height=300"
+                alt="${escapeHtml(product.title)}"
+                loading="lazy"
+                width="300"
                 height="300">` :
           `<div style="background:#f3f4f6;height:200px;display:flex;align-items:center;justify-content:center;border-radius:0px">
             <span style="color:#9ca3af">No image</span>
