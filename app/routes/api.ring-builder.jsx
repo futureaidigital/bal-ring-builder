@@ -468,7 +468,9 @@ function processMetafields(product) {
     }
 
     // Handle format like "center_stone_shape.round" -> "Round"
-    if (strValue.includes('.') && !strValue.includes('://')) {
+    // Only apply if it looks like a metaobject reference (contains underscore before dot)
+    // Don't apply to values like "7.5 ct" or "12.34 mm"
+    if (strValue.includes('.') && !strValue.includes('://') && strValue.includes('_')) {
       const parts = strValue.split('.');
       const lastPart = parts.pop();
       return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
