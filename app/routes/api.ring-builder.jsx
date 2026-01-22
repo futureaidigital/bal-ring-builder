@@ -425,13 +425,20 @@ function processMetafields(product) {
   const getMetafieldValue = (metafield) => {
     if (!metafield) return '';
 
-    // First check if there's a resolved metaobject reference
+    // First check if there's a resolved metaobject reference (single)
     if (metafield.reference) {
-      // Use displayName if available, otherwise handle
       const ref = metafield.reference;
       if (ref.displayName) return ref.displayName;
       if (ref.handle) {
-        // Convert handle like "round" to "Round"
+        return ref.handle.charAt(0).toUpperCase() + ref.handle.slice(1).replace(/-/g, ' ');
+      }
+    }
+
+    // Check for list-type metaobject references (plural)
+    if (metafield.references?.nodes?.length > 0) {
+      const ref = metafield.references.nodes[0];
+      if (ref.displayName) return ref.displayName;
+      if (ref.handle) {
         return ref.handle.charAt(0).toUpperCase() + ref.handle.slice(1).replace(/-/g, ' ');
       }
     }
@@ -1612,17 +1619,32 @@ const COLLECTION_PRODUCTS_QUERY = `
               reference {
                 ... on Metaobject { displayName handle }
               }
+              references(first: 1) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
             }
             stoneColor: metafield(namespace: "custom", key: "stone_color") {
               value
               reference {
                 ... on Metaobject { displayName handle }
               }
+              references(first: 1) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
+              }
             }
             stoneClarity: metafield(namespace: "custom", key: "stone_clarity") {
               value
               reference {
                 ... on Metaobject { displayName handle }
+              }
+              references(first: 1) {
+                nodes {
+                  ... on Metaobject { displayName handle }
+                }
               }
             }
             stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") { value }
