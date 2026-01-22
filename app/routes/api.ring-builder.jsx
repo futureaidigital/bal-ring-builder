@@ -1501,21 +1501,15 @@ function generateGalleryNavigation() {
 }
 
 function generateDiamondSpecs(data) {
-  const specs = [];
-
-  // Primary specs: Shape, Carat, Color, Clarity (the 4 C's focus)
-  if (data.stoneShape) specs.push({ label: 'Shape', value: data.stoneShape });
-  if (data.weightDisplay) specs.push({ label: 'Carat', value: data.weightDisplay });
-  if (data.stoneColor) specs.push({ label: 'Color', value: data.stoneColor });
-  if (data.stoneClarity) specs.push({ label: 'Clarity', value: data.stoneClarity });
-
-  // Cut grades
-  if (data.cutGrade) specs.push({ label: 'Cut', value: data.cutGrade });
-
-  // Certificate
-  if (data.isCertified) {
-    specs.push({ label: 'Certificate', value: data.certificationLab });
-  }
+  // Always show all specs, use N/A for missing values
+  const specs = [
+    { label: 'Shape', value: data.stoneShape || 'N/A' },
+    { label: 'Carat', value: data.weightDisplay || 'N/A' },
+    { label: 'Color', value: data.stoneColor || 'N/A' },
+    { label: 'Clarity', value: data.stoneClarity || 'N/A' },
+    { label: 'Cut', value: data.cutGrade || 'N/A' },
+    { label: 'Certificate', value: data.isCertified ? data.certificationLab : 'N/A' }
+  ];
 
   return generateSpecsHTML(specs);
 }
