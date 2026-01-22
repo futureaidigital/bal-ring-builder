@@ -1,10 +1,10 @@
 import { authenticate } from "../shopify.server";
 
-// Constants - Updated for diamonds
+// Constants - Updated for diamonds (loose stones only)
 const DIAMOND_TYPES = ['precious stone', 'loose stone'];
 const SETTING_TYPES = ['ring', 'pendant', 'ring setting', 'pendant setting'];
-const DIAMOND_TAGS = ['gemstone', 'loose stone', 'white lab diamond', 'lab diamond'];
-const SETTING_TAGS = ['Setting_Ring', 'Setting_Pendant', 'ring setting', 'pendant setting'];
+const DIAMOND_TAGS = ['gemstone', 'loose stone'];  // Only match loose stones, not finished jewelry
+const SETTING_TAGS = ['setting_ring', 'setting_pendant', 'ring setting', 'pendant setting'];
 // Legacy aliases
 const GEMSTONE_TYPES = DIAMOND_TYPES;
 const GEMSTONE_TAGS = DIAMOND_TAGS;

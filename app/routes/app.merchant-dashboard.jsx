@@ -84,9 +84,9 @@ export const loader = async ({ request }) => {
   const searchQuery = url.searchParams.get("search") || "";
   
   try {
-    // Build Shopify query - Updated for diamonds
+    // Build Shopify query - Updated for diamonds (loose stones only)
     let shopifyQuery = productType === 'gemstone'
-      ? '(product_type:"Precious stone" OR product_type:"Loose Stone" OR tag:gemstone OR tag:"White Lab Diamond" OR tag:"Lab Diamond" OR tag:"Loose Stone")'
+      ? '(product_type:"Loose Stone" OR tag:"Loose Stone")'
       : '(tag:Setting_Ring OR tag:Setting_Pendant OR tag:"Ring Setting" OR tag:"Pendant Setting" OR product_type:"Ring Setting" OR product_type:"Pendant Setting")';
     
     if (searchQuery) {
@@ -659,7 +659,7 @@ export default function MerchantDashboard() {
     >
       <p>
       {selectedTab === 0
-        ? "Create products with type 'Loose Stone' or tags 'White Lab Diamond', 'Lab Diamond' to see them here."
+        ? "Create products with type 'Loose Stone' or tag 'Loose Stone' to see them here."
         : "Tag products with 'Ring Setting' or 'Pendant Setting' to see them here."}
       </p>
     </EmptyState>
@@ -842,7 +842,7 @@ export default function MerchantDashboard() {
                   <h3 style={{ marginBottom: '12px' }}>For Diamonds</h3>
                   <div style={{ backgroundColor: '#f6f6f7', padding: '16px', borderRadius: '8px' }}>
                     <p style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
-                      Product Type: "Loose Stone" OR Tags: "White Lab Diamond", "Lab Diamond"
+                      Product Type: "Loose Stone" OR Tag: "Loose Stone"
                     </p>
                     <p style={{ marginBottom: '12px', fontSize: '13px', color: '#6d7175' }}>
                       Required metafields (namespace: custom):

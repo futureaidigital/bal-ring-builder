@@ -209,7 +209,7 @@ export default function Index() {
                     Must have:
                   </Text>
                   <List type="bullet">
-                    <List.Item>Product type: "Loose Stone" OR tags: "White Lab Diamond", "Lab Diamond"</List.Item>
+                    <List.Item>Product type: "Loose Stone" OR tag: "Loose Stone"</List.Item>
                     <List.Item>Metafield: stone_weight (carat)</List.Item>
                     <List.Item>Metafield: stone_shape</List.Item>
                     <List.Item>Metafield: stone_color</List.Item>
