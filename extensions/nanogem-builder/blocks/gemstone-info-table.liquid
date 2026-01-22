@@ -1,0 +1,254 @@
+{% comment %}
+  Dynamic Gemstone Information - Shows relevant info for THIS specific gemstone
+{% endcomment %}
+
+{%- liquid
+  # Only show on product pages with gemstones
+  assign should_show = false
+  
+  if template.name == 'product'
+    assign should_show = true
+    
+    # Check if we should only show on gemstones
+    if block.settings.show_on_gemstones_only
+      assign should_show = false
+      assign pt = product.type | downcase
+      assign is_gemstone = false
+      
+      # Check if it's a gemstone product
+      if pt contains 'stone' or pt contains 'ruby' or pt contains 'sapphire' or pt contains 'emerald' or pt contains 'diamond' or pt contains 'precious'
+        assign is_gemstone = true
+      elsif product.tags contains 'gemstone' or product.tags contains 'gem' or product.tags contains 'stone'
+        assign is_gemstone = true
+      endif
+      
+      if is_gemstone
+        assign should_show = true
+      endif
+    endif
+  endif
+  
+  # Build query parameters for the dynamic app proxy
+  assign query_params = 'shop=' | append: shop.permanent_domain
+  assign query_params = query_params | append: '&product_handle=' | append: product.handle
+  
+  if block.settings.table_title != blank
+    assign encoded_title = block.settings.table_title | url_encode
+    assign query_params = query_params | append: '&title=' | append: encoded_title
+  endif
+  
+  if block.settings.show_title == false
+    assign query_params = query_params | append: '&show_title=false'
+  endif
+  
+  if block.settings.cards_per_row != 'auto'
+    assign query_params = query_params | append: '&cards_per_row=' | append: block.settings.cards_per_row
+  endif
+  
+  assign app_proxy_url = '/apps/nanogem-builder/gemstone-info?' | append: query_params
+
+-%}
+
+{%- if block.settings.debug_mode -%}
+<div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; margin: 10px 0; border-radius: 6px; font-family: monospace; font-size: 12px;">
+  <strong>🔍 Dynamic Gemstone Debug:</strong><br>
+  Product Handle: <code>{{ product.handle }}</code><br>
+  Product Type: <code>{{ product.type }}</code><br>
+  Should Show: <code>{{ should_show }}</code><br>
+  App Proxy URL: <code>{{ app_proxy_url | truncate: 120 }}</code><br>
+  
+  <strong>Metafields:</strong><br>
+  Origin: <code>{{ product.metafields.custom.gemstone_origin }}</code><br>
+  Treatment: <code>{{ product.metafields.custom.gemstone_treatment }}</code><br>
+  Certificate: <code>{{ product.metafields.custom.certification_laboratory }}</code><br>
+</div>
+{%- endif -%}
+
+{%- if should_show -%}
+  <div 
+    id="dynamic-gemstone-{{ block.id }}" 
+    class="dynamic-gemstone-block"
+    style="margin-top: {{ block.settings.margin_top }}px; margin-bottom: {{ block.settings.margin_bottom }}px;"
+    {{ block.shopify_attributes }}
+  >
+    <div class="dynamic-loading" style="text-align: center; padding: 40px 20px;">
+      <div class="loading-spinner" style="display: inline-block; width: 40px; height: 40px; border: 3px solid #f3f4f6; border-top-color: #3b82f6; border-radius: 50%; animation: dg-spin 1s linear infinite;"></div>
+      <p style="color: #666; font-size: 16px; margin-top: 16px;">Loading gemstone details...</p>
+    </div>
+  </div>
+  
+  <style>
+    @keyframes dg-spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .dynamic-gemstone-block {
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    @media (max-width: 768px) {
+      .dynamic-gemstone-block {
+        margin-left: -20px;
+        margin-right: -20px;
+        width: calc(100% + 40px);
+      }
+    }
+  </style>
+  
+  <script>
+  (function() {
+    const blockId = '{{ block.id }}';
+    const debugMode = {{ block.settings.debug_mode | json }};
+    
+    if (debugMode) {
+      console.log('🎯 Dynamic Gemstone Info starting for:', '{{ product.handle }}');
+      console.log('Metafields:', {
+        origin: '{{ product.metafields.custom.gemstone_origin }}',
+        treatment: '{{ product.metafields.custom.gemstone_treatment }}',
+        certificate: '{{ product.metafields.custom.certification_laboratory }}'
+      });
+    }
+    
+    const params = new URLSearchParams({
+      shop: '{{ shop.permanent_domain }}',
+      product_handle: '{{ product.handle }}',
+      title: '{{ block.settings.table_title | default: "About This Gemstone" }}',
+      show_title: '{{ block.settings.show_title }}',
+      cards_per_row: '{{ block.settings.cards_per_row }}'
+    });
+
+    const appUrl = '/apps/nanogem-builder/gemstone-info?' + params.toString();
+    
+    if (debugMode) {
+      console.log('Fetching from:', appUrl);
+    }
+    
+    fetch(appUrl)
+      .then(response => {
+        if (debugMode) {
+          console.log('Response status:', response.status);
+        }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.text();
+      })
+      .then(html => {
+        if (debugMode) {
+          console.log('✅ Received HTML, length:', html.length);
+        }
+        
+        const container = document.getElementById(`dynamic-gemstone-${blockId}`);
+        if (container) {
+          container.innerHTML = html;
+          
+          if (debugMode) {
+            console.log('✅ Dynamic gemstone info loaded');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error loading gemstone info:', error);
+        const container = document.getElementById(`dynamic-gemstone-${blockId}`);
+        if (container) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+              <p style="color: #dc2626; margin: 0 0 10px 0; font-weight: 600;">Unable to load gemstone information</p>
+              <p style="color: #666; font-size: 14px; margin: 0;">Please refresh the page.</p>
+              ${debugMode ? `<p style="color: #666; font-size: 12px; margin-top: 10px;">Error: ${error.message}</p>` : ''}
+            </div>
+          `;
+        }
+      });
+  })();
+  </script>
+{%- elsif block.settings.debug_mode -%}
+  <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 15px; margin: 10px 0; border-radius: 6px;">
+    <p style="color: #dc2626; margin: 0;">Dynamic gemstone block not showing.</p>
+    <p style="color: #666; font-size: 13px; margin: 5px 0 0 0;">
+      {%- if template.name != 'product' -%}
+        Only appears on product pages.
+      {%- elsif block.settings.show_on_gemstones_only -%}
+        Product not classified as gemstone.
+      {%- endif -%}
+    </p>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Dynamic Gemstone Info",
+  "target": "section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_on_gemstones_only",
+      "label": "Show on gemstone products only",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "table_title",
+      "label": "Section title",
+      "default": "About This Gemstone"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "Show title",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "label": "Top margin",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Bottom margin",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "cards_per_row",
+      "label": "Cards per row",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "Auto"
+        },
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        },
+        {
+          "value": "3",
+          "label": "3"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "debug_mode",
+      "label": "Enable debug mode",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

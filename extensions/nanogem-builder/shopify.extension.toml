@@ -1,0 +1,46 @@
+name = "nanogem-builder"
+
+uid = "cd3759c0-2918-2497-a0ff-e2bcc54439e11127e342"
+
+type = "theme_app_extension"
+api_version = "2025-04"
+
+# Define where your blocks can be used
+[[blocks]]
+name = "Ring Builder"
+description = "Main ring builder interface for product pages"
+filename = "blocks/ring-builder.liquid"
+target = "section"
+templates = ["product"]
+
+[[blocks]]
+name = "Gemstone Collection"
+description = "Enhanced collection display for gemstones"
+filename = "blocks/gemstone-collection.liquid"
+target = "section"
+templates = ["collection"]
+
+[[blocks]]
+name = "Gemstone Info Table"
+description = "Educational table showing gemstone origins, treatments, and certificates"
+filename = "blocks/gemstone-info-table.liquid"
+target = "section"
+templates = ["product", "collection", "page"]
+
+# App-level settings (optional)
+[settings]
+  [[settings.fields]]
+  key = "gemstone_collection"
+  type = "collection_reference"
+  label = "Default Gemstone Collection"
+  
+  [[settings.fields]]
+  key = "setting_collection"
+  type = "collection_reference"
+  label = "Default Settings Collection"
+  
+  [[settings.fields]]
+  key = "enable_filtering"
+  type = "checkbox"
+  label = "Enable Advanced Filtering"
+  default = true

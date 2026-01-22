@@ -1,0 +1,750 @@
+{% schema %}
+{
+  "name": "Ring Preview Loader",
+  "target": "section",
+  "enabled_on": {"templates": ["product"]},
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable",
+      "label": "Enable ring preview",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "preview_handle",
+      "label": "Preview product handle",
+      "default": "custom-ring-preview",
+      "info": "The product handle used for the ring preview page"
+    }
+  ]
+}
+{% endschema %}
+
+{% if block.settings.enable and product.handle == 'custom-ring-preview' %}
+<script>
+(function() {
+  'use strict';
+  
+  const params = new URLSearchParams(location.search);
+  const gemstoneHandle = params.get('gemstone');
+  const settingHandle = params.get('setting');
+  const settingVariantId = params.get('setting_variant');
+  
+  if (!gemstoneHandle || !settingHandle) {
+    if (!location.hostname.includes('admin.shopify.com')) {
+      location.href = '/collections/gemstones';
+    }
+    return;
+  }
+  
+  // In the Ring Preview Loader, replace the initRingPreview function:
+
+  async function initRingPreview() {
+    try {
+      showLoadingState();
+      
+      // UPDATED: Use the app proxy endpoint that includes metafields
+      const [gemstoneRes, settingRes] = await Promise.all([
+        fetch(`/apps/nanogem-builder/product-details?handle=${gemstoneHandle}`),
+        fetch(`/apps/nanogem-builder/product-details?handle=${settingHandle}`)
+      ]);
+      
+      if (!gemstoneRes.ok || !settingRes.ok) {
+        // Fallback to .js endpoint if app proxy fails
+        console.warn('App proxy failed, falling back to .js endpoint');
+        const [gemstoneResJS, settingResJS] = await Promise.all([
+          fetch(`/products/${gemstoneHandle}.js`),
+          fetch(`/products/${settingHandle}.js`)
+        ]);
+        
+        if (!gemstoneResJS.ok || !settingResJS.ok) {
+          throw new Error(`Failed to load products`);
+        }
+        
+        const gemstone = await gemstoneResJS.json();
+        const setting = await settingResJS.json();
+        console.warn('Using .js endpoint - no metafields available');
+      } else {
+        var gemstone = await gemstoneRes.json();
+        var setting = await settingRes.json();
+      }
+      
+      // Debug log to verify metafields
+      console.log('Gemstone data with metafields:', gemstone);
+      console.log('Gemstone metafields:', gemstone.metafields);
+      console.log('Setting data with metafields:', setting);
+      console.log('Setting metafields:', setting.metafields);
+      // Log all setting variants with their metafields
+      console.log('=== ALL SETTING VARIANTS ===');
+      setting.variants.forEach(v => {
+        console.log(`Variant ${v.id} (${v.title}):`, v);
+        console.log('Variant metafields:', v.metafields);
+      });
+      let settingVariant = setting.variants[0];
+      if (settingVariantId) {
+        const match = setting.variants.find(v => v.id == settingVariantId);
+        if (match) settingVariant = match;
+      }
+      
+      const totalPrice = gemstone.price + settingVariant.price;
+      
+      updatePageTitle(gemstone, setting);
+      updatePrice(totalPrice);
+      replaceGalleryImages(gemstone, setting, settingVariant);
+      hideVariantSelectors();
+      hideLoadingState();
+      // In initRingPreview, replace the updateAddToCart call:
+      setTimeout(() => {
+        updateAddToCart(gemstone, settingVariant);
+      }, 1000); // Increased delay to 1 second
+      
+      // Add a small delay to ensure DOM is ready
+      setTimeout(() => {
+        addActionButtons(gemstoneHandle, settingHandle, settingVariantId);
+        addCollapsibleDetails(gemstone, setting, settingVariant);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Ring preview error:', error);
+      if (!location.hostname.includes('admin.shopify.com')) {
+        alert('Error loading ring preview. Redirecting...');
+        location.href = '/collections/gemstones';
+      }
+    }
+  }
+  
+  function showLoadingState() {
+    const loader = document.createElement('div');
+    loader.id = 'ring-preview-loader';
+    loader.innerHTML = `<div style="text-align:center;padding:40px"><div style="display:inline-block;width:40px;height:40px;border:3px solid #f3f3f3;border-top:3px solid #333;border-radius:50%;animation:spin 1s linear infinite"></div><p style="margin-top:16px;color:#666">Loading your custom ring...</p></div>`;
+    const productContainer = document.querySelector('.product');
+    if (productContainer) {
+      productContainer.style.opacity = '0.5';
+      productContainer.parentElement.insertBefore(loader, productContainer);
+    }
+  }
+  
+  function hideLoadingState() {
+    const loader = document.getElementById('ring-preview-loader');
+    if (loader) loader.remove();
+    const productContainer = document.querySelector('.product');
+    if (productContainer) productContainer.style.opacity = '1';
+  }
+  
+  function updatePageTitle(gemstone, setting) {
+    const newTitle = `${gemstone.title} with ${setting.title}`;
+    document.querySelectorAll('h1,.product__title,.product-info__title,[class*="title"],.h3').forEach(el => {
+      if (el.closest('.product-info') || el.closest('.product')) {
+        el.textContent = newTitle;
+        // Don't set any styles - keep the theme's default
+      }
+    });
+    document.title = `${newTitle} | ${window.Shopify?.shop || 'Shop'}`;
+  }
+  
+  function updatePrice(totalPrice) {
+    const formattedPrice = formatMoney(totalPrice);
+    document.querySelectorAll('price-list,price-list .price,.price-list,.price-list .price,.price-item--regular,[class*="price"]:not(.price-list),.product-info__price .price').forEach(el => {
+      if (el.closest('.product-info') || el.closest('.product')) {
+        el.innerHTML = formattedPrice;
+      }
+    });
+    document.querySelectorAll('.price-item--sale,.price__sale,.badge--sale,.product-badge').forEach(el => el.style.display = 'none');
+  }
+  
+  function formatMoney(fils) {
+    // Convert USD to AED (your shop uses USD base but displays AED)
+    const USD_TO_AED = 3.67;
+    const filsInAED = Math.round(fils * USD_TO_AED);
+    
+    // Convert to actual amount (from fils/cents)
+    const amount = filsInAED / 100;
+    
+    // Format with proper comma separators
+    const formatted = amount.toLocaleString('en-AE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    
+    return `AED ${formatted}`;
+  }
+  
+  function replaceGalleryImages(gemstone, setting, settingVariant) {
+    const gemstoneImages = gemstone.images || [gemstone.featured_image];
+    const settingImages = getSettingImages(setting, settingVariant);
+    const combinedImages = [];
+    const usedUrls = new Set();
+    
+    function addUnique(img) {
+      const normalized = img.replace(/\?v=\d+/, '').split('?')[0];
+      if (!usedUrls.has(normalized)) {
+        usedUrls.add(normalized);
+        combinedImages.push(img);
+      }
+    }
+    
+    if (gemstoneImages.length > 0) addUnique(gemstoneImages[0]);
+    settingImages.slice(0, 3).forEach(img => addUnique(img));
+    
+    const productGallery = document.querySelector('product-gallery');
+    if (productGallery) {
+      const mediaItems = productGallery.querySelectorAll('.product-gallery__media');
+      let currentIndex = 0;
+      
+      function replaceNext() {
+        if (currentIndex >= Math.min(mediaItems.length, combinedImages.length)) {
+          updateThumbnails();
+          return;
+        }
+        
+        const mediaItem = mediaItems[currentIndex];
+        const imageUrl = combinedImages[currentIndex];
+        const index = currentIndex;
+        
+        if (mediaItem && imageUrl) {
+          const img = mediaItem.querySelector('img');
+          if (img) {
+            const uniqueId = `${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
+            const newSrc = `${imageUrl}?v=${uniqueId}&width=1600`;
+            
+            img.src = newSrc;
+            img.dataset.src = newSrc;
+            if (img.srcset) img.srcset = `${newSrc} 1600w`;
+            
+            mediaItem.dataset.mediaId = `ring-${uniqueId}`;
+            mediaItem.classList.remove('is-duplicate', 'is-filtered', 'hidden');
+            mediaItem.style.cssText = 'display:block!important;visibility:visible!important';
+            
+            img.alt = index === 0 ? gemstone.title : `${setting.title} - ${settingVariant.option1 || 'View'} ${index}`;
+          }
+        }
+        currentIndex++;
+        setTimeout(replaceNext, 200);
+      }
+      
+      replaceNext();
+      
+      function updateThumbnails() {
+        document.querySelectorAll('.product-gallery__thumbnail img,.product__thumbs img').forEach((thumb, idx) => {
+          if (idx < combinedImages.length) {
+            thumb.src = `${combinedImages[idx]}?v=${Date.now()}_${idx}&width=150`;
+          }
+        });
+        setTimeout(ensureGridLayout, 500);
+      }
+      
+      function ensureGridLayout() {
+        const style = document.createElement('style');
+        style.id = 'ring-preview-grid';
+        style.textContent = `@media(min-width:768px){product-gallery,product-gallery .product-gallery__carousel{height:auto!important;min-height:700px!important}product-gallery .product-gallery__carousel{display:grid!important;grid-template-columns:repeat(2,1fr)!important;gap:30px!important;overflow:visible!important}}@media(max-width:767px){product-gallery .product-gallery__carousel{display:flex!important;overflow-x:auto!important}product-gallery .product-gallery__media{flex:0 0 100%!important}}product-gallery .product-gallery__media:nth-child(-n+4){display:block!important;visibility:visible!important}product-gallery .product-gallery__media:nth-child(n+5){display:none!important}`;
+        document.head.appendChild(style);
+      }
+    }
+  }
+
+  function getSettingImages(setting, variant) {
+    let imgs = setting.images || [setting.featured_image];
+    
+    if (variant?.option1) {
+      const metal = variant.option1.toLowerCase();
+      const terms = metal.includes('rose') ? ['rose'] : metal.includes('white') ? ['white'] : metal.includes('yellow') ? ['yellow'] : [];
+      
+      if (terms.length && setting.media) {
+        const filtered = [];
+        setting.media.forEach((m, i) => {
+          if (m.alt && terms.some(t => m.alt.toLowerCase().includes(t)) && imgs[i]) {
+            filtered.push(imgs[i]);
+          }
+        });
+        if (filtered.length) imgs = filtered;
+      }
+    }
+    
+    return [...new Set(imgs.map(img => typeof img === 'string' ? img : img.src || img))];
+  }
+  
+  function updateAddToCart(gemstone, settingVariant) {
+    console.log('=== updateAddToCart DEBUG ===');
+    console.log('Gemstone:', gemstone);
+    console.log('Setting variant:', settingVariant);
+    
+    // Find ALL possible submit buttons with a more comprehensive selector
+    const buttonSelectors = [
+      'button[type="submit"]',
+      'input[type="submit"]', 
+      'button[name="add"]',
+      '.btn--add-to-cart',
+      '.product-form__submit',
+      '.button.w-full',
+      'form[action*="/cart/add"] button',
+      'product-form button',
+      '.product-form button',
+      '[class*="add-to-cart"]'
+    ];
+    
+    let buttons = [];
+    buttonSelectors.forEach(selector => {
+      const found = document.querySelectorAll(selector);
+      found.forEach(btn => {
+        if (!buttons.includes(btn)) {
+          buttons.push(btn);
+        }
+      });
+    });
+    
+    
+    if (buttons.length === 0) {
+      console.error('No buttons found! Trying fallback...');
+      // Fallback: find ANY button in the product area
+      buttons = Array.from(document.querySelectorAll('.product button, .product-info button'));
+    }
+    
+    buttons.forEach((btn, index) => {
+      
+      // Update button text and properties
+      btn.textContent = 'Add Both Items to Cart';
+      btn.disabled = false;
+      btn.type = 'button'; // Change from submit to button
+      
+      // Remove all existing event listeners by cloning
+      const newBtn = btn.cloneNode(true);
+      newBtn.textContent = 'Add Both Items to Cart';
+      newBtn.disabled = false;
+      newBtn.type = 'button';
+      
+      // Replace the old button with the new one
+      if (btn.parentNode) {
+        btn.parentNode.replaceChild(newBtn, btn);
+      }
+      
+      // Add our custom click handler
+      newBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        console.log('Custom add to cart clicked');
+        
+        this.disabled = true;
+        this.textContent = 'Adding to cart...';
+        
+        try {
+          console.log('Adding items to cart:', {
+            gemstone: gemstone.variants[0].id,
+            setting: settingVariant.id
+          });
+          
+          const response = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              items: [
+                { id: parseInt(gemstone.variants[0].id), quantity: 1 },
+                { id: parseInt(settingVariant.id), quantity: 1 }
+              ]
+            })
+          });
+          
+          const responseData = await response.json();
+          console.log('Add to cart response:', responseData);
+          
+          if (response.ok) {
+            this.textContent = 'Added! Redirecting...';
+            
+            // Trigger cart drawer or update cart count
+            if (window.theme && window.theme.cart) {
+              window.theme.cart.getState();
+            }
+            
+            // Dispatch cart update event
+            window.dispatchEvent(new CustomEvent('cart:updated'));
+            
+            setTimeout(() => location.href = '/cart', 500);
+          } else {
+            console.error('Add to cart failed:', responseData);
+            throw new Error(responseData.message || 'Failed to add items');
+          }
+        } catch (error) {
+          console.error('Add to cart error:', error);
+          this.disabled = false;
+          this.textContent = 'Add Both Items to Cart';
+          alert('Error adding items to cart: ' + error.message);
+        }
+      });
+    });
+    
+    // Also prevent form submission entirely
+    const forms = document.querySelectorAll('form[action*="/cart/add"], product-form form, product-form');
+    forms.forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        console.log('Form submission prevented');
+        return false;
+      }, { capture: true });
+    });
+    
+    // Disable quantity and variant inputs
+    document.querySelectorAll('input[name="quantity"], input[name="id"], select[name="id"]').forEach(input => {
+      input.disabled = true;
+      input.style.display = 'none';
+    });
+    
+    console.log('=== updateAddToCart COMPLETE ===');
+  }
+
+  function addActionButtons(gemstoneHandle, settingHandle, settingVariantId) {
+    const html = `<div class="ring-preview-actions"><div class="ring-preview-actions-grid"><a href="/collections/gemstones?setting=${settingHandle}${settingVariantId ? '&setting_variant=' + settingVariantId : ''}" class="button button--outline">Change Gemstone</a><a href="/collections/settings?gemstone=${gemstoneHandle}" class="button button--outline">Change Setting</a></div><button type="button" class="button button--outline ring-preview-share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Share this Design</span></button></div>`;
+    
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    
+    // Place ABOVE the add to cart button
+    const productInfo = document.querySelector('.product-info, safe-sticky.product-info');
+    
+    if (productInfo) {
+      // Find the form or buy buttons block
+      const form = productInfo.querySelector('form[action*="/cart/add"], product-form');
+      
+      if (form) {
+        // Check if form is inside a block wrapper
+        const blockWrapper = form.closest('.product-info__block-item');
+        
+        if (blockWrapper) {
+          // Insert before the block wrapper
+          blockWrapper.parentElement.insertBefore(container.firstElementChild, blockWrapper);
+        } else {
+          // Insert directly before the form
+          form.parentElement.insertBefore(container.firstElementChild, form);
+        }
+      } else {
+        // Fallback: look for submit button
+        const submitButton = productInfo.querySelector('button[type="submit"], button[name="add"], .product-form__submit');
+        if (submitButton) {
+          const formParent = submitButton.closest('form, .product-form, .product-info__block-item');
+          if (formParent) {
+            formParent.parentElement.insertBefore(container.firstElementChild, formParent);
+          }
+        } else {
+          // Last fallback: append to product info
+          productInfo.appendChild(container.firstElementChild);
+        }
+      }
+    } else {
+      // If no product-info found, try finding the form directly
+      const form = document.querySelector('form[action*="/cart/add"], product-form');
+      if (form) {
+        form.parentElement.insertBefore(container.firstElementChild, form);
+      }
+    }
+    
+    initializeShareButton();
+  }
+  
+  function initializeShareButton() {
+    const btn = document.querySelector('.ring-preview-share');
+    if (!btn) return;
+    
+    btn.addEventListener('click', async function() {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: document.title, text: 'Check out this custom ring!', url: location.href });
+          return;
+        } catch {}
+      }
+      
+      try {
+        await navigator.clipboard.writeText(location.href);
+        const orig = this.innerHTML;
+        this.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span>Link Copied!</span>';
+        this.classList.add('button--success');
+        setTimeout(() => {
+          this.innerHTML = orig;
+          this.classList.remove('button--success');
+        }, 2000);
+      } catch {
+        prompt('Copy this link:', location.href);
+      }
+    });
+  }
+  
+  function hideVariantSelectors() {
+    document.querySelectorAll('variant-picker,variant-radios,variant-selects,.product-form__input,.product-form__options,product-variants,.variant-picker,[class*="variant-picker"],pickup-availability,.inventory,quantity-selector').forEach(el => el.style.display = 'none');
+  }
+function addCollapsibleDetails(gemstone, setting, settingVariant) {
+  console.log('=== addCollapsibleDetails DEBUG ===');
+  console.log('Gemstone:', gemstone);
+  console.log('Gemstone metafields:', gemstone.metafields);
+  console.log('Setting:', setting);
+  console.log('Setting metafields:', setting.metafields);
+  console.log('Setting variant:', settingVariant);
+  console.log('Setting variant metafields:', settingVariant.metafields);
+  
+  const getMeta = (p, k) => {
+    console.log(`getMeta called for key: ${k}`);
+    
+    if (!p.metafields) {
+      console.log('No metafields found');
+      return null;
+    }
+    
+    // Handle object structure from app proxy
+    if (typeof p.metafields === 'object' && !Array.isArray(p.metafields)) {
+      console.log(`Looking for ${k} in metafields object:`, p.metafields[k]);
+      return p.metafields[k] || null;
+    }
+    
+    // Handle array structure (legacy)
+    if (Array.isArray(p.metafields)) {
+      const f = p.metafields.find(m => m.key === k);
+      return f ? f.value : null;
+    }
+    
+    return null;
+  };
+  
+  // Function to get variant metafields
+  const getVariantMeta = (variant, key) => {
+    console.log(`getVariantMeta called for key: ${key}`);
+    
+    // Remove 'custom.' prefix if present
+    const cleanKey = key.replace('custom.', '');
+    
+    // Map common keys to their GraphQL query names
+    const keyMap = {
+      'metal_weight': 'metalWeight',
+      'accent_carat_weight': 'accentCaratWeight',
+      'accent_stone_size': 'accentStoneSize',
+      'accent_stone_count': 'accentStoneCount',
+      'max_stone_size': 'maxStoneSize',
+      'min_stone_size': 'minStoneSize',
+      'accent_stone_type': 'accentStoneType',
+      'accent_stone_quality': 'accentStoneQuality',
+      'accent_stone_shape': 'accentStoneShape',
+      'metal_type': 'metalType'
+    };
+    
+    // Check if variant has the property directly (from GraphQL response)
+    const graphqlKey = keyMap[cleanKey] || cleanKey;
+    if (variant[graphqlKey] && variant[graphqlKey].value) {
+      return variant[graphqlKey].value;
+    }
+    
+    // Fallback to metafields object if it exists
+    if (variant.metafields && variant.metafields[cleanKey]) {
+      return variant.metafields[cleanKey];
+    }
+    
+    // Fallback to parent setting metafields
+    if (setting.metafields && setting.metafields[cleanKey]) {
+      return setting.metafields[cleanKey];
+    }
+    
+    return null;
+  };
+    
+  // Test getMeta function
+  console.log('Testing getMeta for gemstone_type:', getMeta(gemstone, 'gemstone_type'));
+  console.log('Testing getMeta for gemstone_weight:', getMeta(gemstone, 'gemstone_weight'));
+  console.log('Testing getVariantMeta for custom.metal_weight:', getVariantMeta(settingVariant, 'custom.metal_weight'));
+  
+  const html = `<div class="ring-preview-details">
+    <div class="details-box">
+      <div class="details-header">
+        <span class="details-title">Gemstone Details</span>
+      </div>
+      <div class="details-table">
+        <div class="details-row"><span class="details-label">Type</span><span class="details-value">${getMeta(gemstone,'gemstone_type')||'Gemstone'}</span></div>
+        <div class="details-row"><span class="details-label">Shape</span><span class="details-value">${getMeta(gemstone,'gemstone_shape')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Weight</span><span class="details-value">${getMeta(gemstone,'gemstone_weight')||'-'} ct</span></div>
+        <div class="details-row"><span class="details-label">Color</span><span class="details-value">${getMeta(gemstone,'gemstone_color')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Dimensions</span><span class="details-value">${getMeta(gemstone,'gemstone_dimensions')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Treatment</span><span class="details-value">${getMeta(gemstone,'gemstone_treatment')||'Natural'}</span></div>
+        <div class="details-row"><span class="details-label">Origin</span><span class="details-value">${getMeta(gemstone,'gemstone_origin')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Certification</span><span class="details-value">${getMeta(gemstone,'certification_laboratory')||'-'}</span></div>
+      </div>
+    </div>
+    <div class="details-box">
+      <div class="details-header">
+        <span class="details-title">Setting Details</span>
+      </div>
+      <div class="details-table">
+        <div class="details-row"><span class="details-label">Style</span><span class="details-value">${getMeta(setting,'ring_style')||setting.productType||setting.type||'Setting'}</span></div>
+        <div class="details-row"><span class="details-label">Metal Type</span><span class="details-value">${settingVariant.option1||getMeta(setting,'metal_type')||'-'}</span></div>
+        <div class="details-row"><span class="details-label">Stone Compatibility</span><span class="details-value">${getMeta(setting,'center_stone_shape')||'Various'} shapes</span></div>
+        ${settingVariant.option2 ? `<div class="details-row"><span class="details-label">Size Range</span><span class="details-value">${settingVariant.option2}</span></div>` : ''}
+      </div>
+    </div>
+  </div>`;
+  
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  
+  // UPDATED: Place after the main product container to avoid overlap
+  const productContainer = document.querySelector('.product');
+  if (productContainer && productContainer.parentElement) {
+    productContainer.parentElement.appendChild(container.firstElementChild);
+  } else {
+    // Fallback to original placement
+    const target = document.querySelector('.ring-preview-actions,.product-info');
+    if (target) target.after(container.firstElementChild);
+  }
+}
+
+
+  function injectStyles() {
+    if (document.querySelector('#ring-preview-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'ring-preview-styles';
+    style.textContent = `
+      @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+      
+      /* Button styles remain the same */
+      .ring-preview-actions{margin:2rem 0}
+      .ring-preview-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+      .ring-preview-share{width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem}
+      .ring-preview-share svg{flex-shrink:0}
+      .button--success{background:#059669!important;color:white!important;border-color:#059669!important}
+      
+      /* Updated table styles to match second document */
+      .ring-preview-details{
+        margin:3rem auto;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:1.5rem;
+        width:90%;
+        max-width:1200px
+      }
+      
+      .details-box{
+        background:#fff;
+        border-radius:0;
+        overflow:hidden;
+        margin-bottom:0;
+        border:none;
+        box-shadow:none
+      }
+      
+      .details-header{
+        background:#f9fafb;
+        padding:12px 16px;
+        margin:0;
+        border:none;
+        cursor:default
+      }
+      
+      .details-title{
+        font-size:14px;
+        text-transform:uppercase;
+        letter-spacing:.5px;
+        color:#000000;
+        font-weight:600
+      }
+      
+      .details-table{
+        padding:0;
+        margin:0
+      }
+      
+      .details-row{
+        display:grid;
+        grid-template-columns:120px 1fr;
+        margin:0;
+        padding:0;
+        border:none;
+        border-bottom:none
+      }
+      
+      .details-row:nth-child(odd){
+        background:#f5f5f5
+      }
+      
+      .details-row:nth-child(even){
+        background:#ffffff
+      }
+      
+      .details-label{
+        padding:10px 16px;
+        font-size:13px;
+        color:#000000;
+        font-weight:600;
+        text-align:left;
+        flex:none;
+        word-wrap:break-word
+      }
+      
+      .details-value{
+        padding:10px 16px;
+        margin:0;
+        font-size:13px;
+        color:#000000;
+        text-align:right;
+        word-wrap:break-word
+      }
+      
+      /* Special styles for natural treatment */
+      .details-value.natural{
+        color:#059669;
+        font-weight:600
+      }
+      
+      /* Badge style for certificates */
+      .details-value .badge{
+        display:inline-block;
+        background:#f0f0f0;
+        color:#000000;
+        padding:2px 8px;
+        border-radius:12px;
+        font-size:11px;
+        font-weight:500
+      }
+      
+      /* Price styling */
+      price-list,.price-list,.product-info__price .price,.price-item--regular{
+        font-size:1.25rem!important;
+        font-weight:300!important
+      }
+      
+      /* Mobile responsive */
+      @media(max-width:768px){
+        .ring-preview-actions-grid{grid-template-columns:1fr}
+        .ring-preview-details{
+          grid-template-columns:1fr;
+          gap:1.5rem
+        }
+        .details-header{
+          padding:10px 12px;
+          font-size:.95rem
+        }
+        .details-row{
+          grid-template-columns:1fr 1fr;
+          min-height:auto
+        }
+        .details-label,.details-value{
+          padding:8px 10px!important;
+          font-size:12px
+        }
+        .details-value{
+          text-align:right;
+          justify-content:flex-end
+        }
+        price-list,.price-list{font-size:1.25rem!important}
+      }`;
+    document.head.appendChild(style);
+  }
+  
+  injectStyles();
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRingPreview);
+  } else {
+    initRingPreview();
+  }
+})();
+</script>
+{% endif %}

@@ -1,0 +1,410 @@
+{% comment %}
+  Product Page Builder - App Proxy Version with Debug and Fallback
+{% endcomment %}
+
+{% schema %}
+{
+  "name": "Ring Builder Button",
+  "target": "section",
+  "enabled_on": {"templates": ["product"]},
+  "settings": [
+    {"type": "checkbox","id": "show_info_table","label": "Show product info table","default": true},
+    {"type": "checkbox","id": "debug_mode","label": "Enable debug mode","default": false},
+    {"type": "checkbox","id": "use_fallback","label": "Use fallback mode (bypass app proxy)","default": false},
+    {"type": "text","id": "gemstone_button_text","label": "Button text for gemstones","default": "Select a Setting →"},
+    {"type": "text","id": "setting_button_text","label": "Button text for settings","default": "Select a Gemstone →"},
+    {"type": "text","id": "add_both_text","label": "Button text when both selected","default": "Add Both to Cart"},
+    {"type": "text","id": "gemstone_collection","label": "Gemstone collection handle","default": "gemstones"},
+    {"type": "text","id": "settings_collection","label": "Settings collection handle","default": "settings"}
+  ]
+}
+{% endschema %}
+
+{%- liquid
+  # Product classification (fallback logic)
+  assign pt = product.type | downcase
+  assign is_gem = false
+  assign is_set = false
+  assign is_preview = false
+  
+  if product.handle == 'custom-ring-preview'
+    assign is_preview = true
+  endif
+  
+  # Check if it's a gemstone - MORE FLEXIBLE
+  if pt contains 'stone' or pt contains 'ruby' or pt contains 'sapphire' or pt contains 'emerald' or pt contains 'diamond'
+    assign is_gem = true
+  elsif product.tags contains 'gemstone' or product.tags contains 'gem' or product.tags contains 'stone'
+    assign is_gem = true
+  endif
+  
+  # Check if it's a setting
+  unless is_gem
+    if pt contains 'ring' or pt contains 'pendant' or pt contains 'setting' or pt contains 'mount'
+      assign is_set = true
+    elsif product.tags contains 'Setting_Ring' or product.tags contains 'Setting_Pendant' or product.tags contains 'setting'
+      assign is_set = true
+    endif
+  endunless
+  
+  assign show = false
+  if is_gem or is_set or is_preview
+    assign show = true
+  endif
+  
+  # Build query parameters for the app proxy
+  assign query_params = 'product_handle=' | append: product.handle
+  
+  if block.settings.show_info_table != blank
+    assign query_params = query_params | append: '&show_info_table=' | append: block.settings.show_info_table
+  endif
+  
+  if block.settings.gemstone_button_text != blank
+    assign encoded_text = block.settings.gemstone_button_text | url_encode
+    assign query_params = query_params | append: '&gemstone_button_text=' | append: encoded_text
+  endif
+  
+  if block.settings.setting_button_text != blank
+    assign encoded_text = block.settings.setting_button_text | url_encode
+    assign query_params = query_params | append: '&setting_button_text=' | append: encoded_text
+  endif
+  
+  if block.settings.add_both_text != blank
+    assign encoded_text = block.settings.add_both_text | url_encode
+    assign query_params = query_params | append: '&add_both_text=' | append: encoded_text
+  endif
+  
+  if block.settings.gemstone_collection != blank
+    assign query_params = query_params | append: '&gemstone_collection=' | append: block.settings.gemstone_collection
+  endif
+  
+  if block.settings.settings_collection != blank
+    assign query_params = query_params | append: '&settings_collection=' | append: block.settings.settings_collection
+  endif
+  
+  assign app_proxy_url = '/apps/nanogem-builder/product-builder?' | append: query_params
+-%}
+
+{%- if block.settings.debug_mode -%}
+<div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; margin: 10px 0; border-radius: 6px; font-family: monospace; font-size: 12px;">
+  <strong>🔍 Product Builder Debug Info:</strong><br>
+  Product Type: <code>{{ product.type }}</code><br>
+  Product Tags: <code>{{ product.tags | join: ', ' }}</code><br>
+  Product Handle: <code>{{ product.handle }}</code><br>
+  Is Gemstone: <code>{{ is_gem }}</code><br>
+  Is Setting: <code>{{ is_set }}</code><br>
+  Should Show: <code>{{ show }}</code><br>
+  App Proxy URL: <code>{{ app_proxy_url | truncate: 100 }}</code>
+</div>
+{%- endif -%}
+
+{%- if show -%}
+  {%- if block.settings.use_fallback -%}
+    <!-- FALLBACK MODE: Direct button without app proxy -->
+    <div class="rb-wrap">
+      {%- if is_gem or is_set -%}
+        {%- assign url_gemstone = '' -%}
+        {%- assign url_setting = '' -%}
+        {%- for param in request.url.params -%}
+          {%- if param[0] == 'gemstone' -%}{%- assign url_gemstone = param[1] -%}{%- endif -%}
+          {%- if param[0] == 'setting' -%}{%- assign url_setting = param[1] -%}{%- endif -%}
+        {%- endfor -%}
+        
+        {%- assign has_both = false -%}
+        {%- if is_gem and url_setting != blank -%}{%- assign has_both = true -%}{%- endif -%}
+        {%- if is_set and url_gemstone != blank -%}{%- assign has_both = true -%}{%- endif -%}
+        
+        {%- if has_both -%}
+          <div class="rb-selected" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#0369a1;">
+            <strong>Selected {% if is_gem %}setting{% else %}gemstone{% endif %}:</strong> 
+            {% if is_gem %}{{ url_setting | replace: '-', ' ' }}{% else %}{{ url_gemstone | replace: '-', ' ' }}{% endif %}
+          </div>
+        {%- endif -%}
+        
+        <button type="button" 
+                class="button button--full-width"
+                onclick="handleRingBuilderClick()"
+                style="margin-top: 10px;">
+          {%- if has_both -%}
+            {{ block.settings.add_both_text }}
+          {%- elsif is_gem -%}
+            {{ block.settings.gemstone_button_text }}
+          {%- else -%}
+            {{ block.settings.setting_button_text }}
+          {%- endif -%}
+        </button>
+        <script>
+        function handleRingBuilderClick() {
+          alert('NEW CODE IS RUNNING!');
+          // Only show debug if debug mode is enabled
+          const debugMode = {{ block.settings.debug_mode | default: false | json }};
+          
+          const isGem = {{ is_gem | json }};
+          const isBoth = {{ has_both | json }};
+          
+          // Function to show debug and wait
+          function showDebugAndWait(debugInfo, finalUrl) {
+            let debugDiv = document.getElementById('rb-debug');
+            if (!debugDiv) {
+              debugDiv = document.createElement('div');
+              debugDiv.id = 'rb-debug';
+              debugDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #000;
+                color: #0f0;
+                padding: 20px;
+                border: 2px solid #0f0;
+                border-radius: 5px;
+                font-family: monospace;
+                font-size: 12px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                z-index: 99999;
+                box-shadow: 0 0 20px rgba(0,255,0,0.3);
+              `;
+              document.body.appendChild(debugDiv);
+            }
+            
+            debugDiv.innerHTML = debugInfo;
+            
+            // Add buttons
+            const buttonDiv = document.createElement('div');
+            buttonDiv.style.marginTop = '15px';
+            
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = 'CONTINUE →';
+            continueBtn.style.cssText = `
+              padding: 8px 16px;
+              background: #0f0;
+              color: #000;
+              border: none;
+              cursor: pointer;
+              font-weight: bold;
+              margin-right: 10px;
+            `;
+            continueBtn.onclick = () => {
+              window.location.href = finalUrl;
+            };
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'CANCEL';
+            closeBtn.style.cssText = `
+              padding: 8px 16px;
+              background: #f00;
+              color: #fff;
+              border: none;
+              cursor: pointer;
+            `;
+            closeBtn.onclick = () => {
+              debugDiv.remove();
+            };
+            
+            buttonDiv.appendChild(continueBtn);
+            buttonDiv.appendChild(closeBtn);
+            debugDiv.appendChild(buttonDiv);
+          }
+          
+          // Start building debug info
+          let debugInfo = '<strong>🐛 RING BUILDER DEBUG</strong><br>';
+          debugInfo += `Time: ${new Date().toLocaleTimeString()}<br>`;
+          debugInfo += `Current URL: ${window.location.href}<br>`;
+          debugInfo += `Is Gem: ${isGem}<br>`;
+          debugInfo += `Has Both: ${isBoth}<br>`;
+          debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+          
+          if (isBoth) {
+            const currentParams = new URLSearchParams(window.location.search);
+            const cleanParams = new URLSearchParams();
+            
+            debugInfo += 'MODE: Has Both<br>';
+            debugInfo += `Gemstone: ${currentParams.get('gemstone') || 'none'}<br>`;
+            debugInfo += `Setting: ${currentParams.get('setting') || 'none'}<br>`;
+            debugInfo += `Setting Variant: ${currentParams.get('setting_variant') || 'none'}<br>`;
+            
+            if (currentParams.get('gemstone')) cleanParams.set('gemstone', currentParams.get('gemstone'));
+            if (currentParams.get('setting')) cleanParams.set('setting', currentParams.get('setting'));
+            if (currentParams.get('setting_variant')) cleanParams.set('setting_variant', currentParams.get('setting_variant'));
+            
+            const previewUrl = '/products/custom-ring-preview?' + cleanParams.toString();
+            debugInfo += `<br>REDIRECT TO: ${previewUrl}`;
+            
+            if (debugMode) {
+              showDebugAndWait(debugInfo, previewUrl);
+            } else {
+              window.location.href = previewUrl;
+            }
+            
+          } else {
+            const collection = isGem ? '{{ block.settings.settings_collection }}' : '{{ block.settings.gemstone_collection }}';
+            const paramName = isGem ? 'gemstone' : 'setting';
+            const handle = '{{ product.handle }}';
+            
+            debugInfo += `MODE: Single Selection<br>`;
+            debugInfo += `Product Handle: ${handle}<br>`;
+            debugInfo += `Collection: ${collection}<br>`;
+            debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+            
+            // Get FRESH params at click time
+            const currentParams = new URLSearchParams(window.location.search);
+            
+            debugInfo += `<strong>CHECKING VARIANTS:</strong><br>`;
+            
+            // Get current variant from the FRESH URL
+            let currentVariant = currentParams.get('variant');
+            debugInfo += `URL variant param: ${currentVariant || 'none'}<br>`;
+            
+            // Check all possible variant sources
+            const formInput = document.querySelector('input[name="id"]');
+            const radioInput = document.querySelector('[name="id"]:checked');
+            const selectInput = document.querySelector('select[name="id"]');
+            
+            debugInfo += `Form input value: ${formInput?.value || 'not found'}<br>`;
+            debugInfo += `Radio checked value: ${radioInput?.value || 'not found'}<br>`;
+            debugInfo += `Select value: ${selectInput?.value || 'not found'}<br>`;
+            
+            // Also check variant picker forms
+            const variantForm = document.querySelector('form[action*="cart/add"]');
+            if (variantForm) {
+              const variantInput = variantForm.querySelector('[name="id"]');
+              debugInfo += `Cart form variant: ${variantInput?.value || 'not found'}<br>`;
+            }
+            
+            // Only fall back to form input if no URL variant
+            if (!currentVariant) {
+              currentVariant = formInput?.value || radioInput?.value || selectInput?.value;
+              debugInfo += `Using form variant: ${currentVariant || 'none'}<br>`;
+            }
+            
+            debugInfo += `<strong style="color:#ff0">FINAL VARIANT: ${currentVariant || 'NONE!'}</strong><br>`;
+            debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+            
+            // Build completely clean URL
+            const cleanParams = new URLSearchParams();
+            cleanParams.set(paramName, handle);
+            
+            if (currentVariant) {
+              const variantParam = isGem ? 'gemstone_variant' : 'setting_variant';
+              cleanParams.set(variantParam, currentVariant);
+              debugInfo += `Setting ${variantParam}: ${currentVariant}<br>`;
+            }
+            
+            // Only preserve the opposite selection - use FRESH params
+            if (isGem && currentParams.get('setting')) {
+              cleanParams.set('setting', currentParams.get('setting'));
+              debugInfo += `Preserving setting: ${currentParams.get('setting')}<br>`;
+              if (currentParams.get('setting_variant')) {
+                cleanParams.set('setting_variant', currentParams.get('setting_variant'));
+                debugInfo += `Preserving setting_variant: ${currentParams.get('setting_variant')}<br>`;
+              }
+            } else if (!isGem && currentParams.get('gemstone')) {
+              cleanParams.set('gemstone', currentParams.get('gemstone'));
+              debugInfo += `Preserving gemstone: ${currentParams.get('gemstone')}<br>`;
+              if (currentParams.get('gemstone_variant')) {
+                cleanParams.set('gemstone_variant', currentParams.get('gemstone_variant'));
+                debugInfo += `Preserving gemstone_variant: ${currentParams.get('gemstone_variant')}<br>`;
+              }
+            }
+            
+            const finalUrl = `/collections/${collection}?${cleanParams.toString()}`;
+            debugInfo += '<hr style="margin:5px 0;border-color:#0f0">';
+            debugInfo += `<strong>FINAL URL:</strong><br>${finalUrl}`;
+            
+            if (debugMode) {
+              showDebugAndWait(debugInfo, finalUrl);
+            } else {
+              window.location.href = finalUrl;
+            }
+          }
+        }
+        </script>
+      {%- endif -%}
+    </div>
+  {%- else -%}
+    <!-- APP PROXY MODE -->
+    <div id="product-builder-{{ product.id }}" class="product-builder-container">
+      <div style="text-align: center; padding: 10px;">
+        <div class="loading-spinner" style="display: inline-block; width: 30px; height: 30px; border: 3px solid #f3f4f6; border-top-color: #3b82f6; border-radius: 50%; animation: pb-spin 1s linear infinite;"></div>
+        <p style="color: #666; font-size: 14px; margin-top: 8px;">Loading custom jewelry options...</p>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes pb-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    
+    <script>
+    (function() {
+      console.log('Product Builder: Starting load for', '{{ product.handle }}');
+      console.log('Product type:', '{{ product.type }}');
+      console.log('Product tags:', {{ product.tags | json }});
+      
+      // Get current URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Build the app proxy URL
+      const appProxyBase = '{{ app_proxy_url }}';
+      const appUrl = new URL(appProxyBase, window.location.origin);
+      
+      // Add any URL parameters
+      urlParams.forEach((value, key) => {
+        if (!appUrl.searchParams.has(key)) {
+          appUrl.searchParams.append(key, value);
+        }
+      });
+      
+      console.log('Fetching from:', appUrl.toString());
+      
+      // Fetch content from app proxy
+      fetch(appUrl.toString())
+        .then(response => {
+          console.log('Response status:', response.status);
+          if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then(html => {
+          console.log('Received HTML length:', html.length);
+          const container = document.getElementById('product-builder-{{ product.id }}');
+          if (container) {
+            container.innerHTML = html;
+            
+            // Execute any scripts that were in the returned HTML
+            const scripts = container.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+              const newScript = document.createElement('script');
+              newScript.textContent = oldScript.textContent;
+              document.body.appendChild(newScript);
+              oldScript.remove();
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error loading product builder:', error);
+          const container = document.getElementById('product-builder-{{ product.id }}');
+          if (container) {
+            container.innerHTML = `
+              <div style="text-align: center; padding: 20px; background: #fee; border: 1px solid #fcc; border-radius: 6px; margin: 10px 0;">
+                <p style="color: #c00; margin: 0 0 10px 0;">Unable to load product builder</p>
+                <p style="color: #666; font-size: 14px; margin: 0;">Please refresh the page or contact support if the problem persists.</p>
+                {% if block.settings.debug_mode %}
+                <p style="color: #666; font-size: 12px; margin-top: 10px;">Error: ${error.message}</p>
+                {% endif %}
+              </div>
+            `;
+          }
+        });
+    })();
+    </script>
+  {%- endif -%}
+{%- elsif block.settings.debug_mode -%}
+  <div style="background: #fee; border: 1px solid #fcc; padding: 10px; margin: 10px 0; border-radius: 4px;">
+    Product builder not showing because product is not classified as gemstone or setting.
+  </div>
+{%- endif -%}

@@ -1,0 +1,290 @@
+{
+  "ratings": {
+    "stars": {
+      "label": "Ratings"
+    },
+    "home": {
+      "recommendationText": "Recommended Product!"
+    }
+  },
+  "collections": {
+    "general": {
+      "no_matches": "No products found",
+      "no_matches_info": "Try adjusting your filters or browse our other collections."
+    }
+  },
+  "ring_builder": {
+    "general": {
+      "title": "Ring Builder",
+      "create_ring": "Create a Custom Ring",
+      "select_setting": "Select Ring Setting",
+      "browse_gemstones": "Browse Gemstones",
+      "step_1": "Choose Gemstone",
+      "step_2": "Choose Setting",
+      "step_3": "Complete Ring"
+    },
+    "product": {
+      "badge": "Ring Ready",
+      "cta_title": "Create a Custom Ring", 
+      "cta_description": "Design a complete ring with this beautiful gemstone",
+      "button_text": "Select Ring Setting →"
+    },
+    "settings": {
+      "no_gemstone_title": "No Gemstone Selected",
+      "no_gemstone_message": "Please select a gemstone first to continue building your custom ring.",
+      "selected_gemstone": "Selected Gemstone",
+      "change_gemstone": "Change gemstone",
+      "complete_ring": "Complete Your Ring"
+    },
+    "errors": {
+      "storage_failed": "Unable to save your selection. Please try again.",
+      "loading_failed": "Failed to load settings. Please refresh the page."
+    }
+  },
+  "gemstone_collection": {
+    "title": "Ring Builder Collection Enhancement",
+    "description": "Enhanced collection display for ring builder products",
+    "settings": {
+      "auto_detect": "Auto-detect ring builder collections",
+      "collection_handles": "Specific collection handles",
+      "show_filters": "Show advanced filters",
+      "products_per_row_desktop": "Products per row (desktop)",
+      "products_per_row_mobile": "Products per row (mobile)"
+    },
+    "filters": {
+      "title": "Filter Products",
+      "shape": "Shape",
+      "color": "Color",
+      "treatment": "Treatment",
+      "certification": "Certification",
+      "price": "Price",
+      "carat_weight": "Carat Weight",
+      "certified_only": "Certified Only",
+      "clear_all": "Clear All",
+      "active_filters": "Active Filters",
+      "selecting_setting_for": "Selecting a setting for:",
+      "selecting_gemstone_for": "Selecting a gemstone for:",
+      "shapes": {
+        "round": "Round",
+        "oval": "Oval",
+        "cushion": "Cushion",
+        "princess": "Princess",
+        "emerald": "Emerald Cut",
+        "pear": "Pear",
+        "marquise": "Marquise",
+        "heart": "Heart",
+        "radiant": "Radiant",
+        "asscher": "Asscher"
+      },
+      "colors": {
+        "blue": "Blue",
+        "pink": "Pink",
+        "yellow": "Yellow",
+        "padparadscha": "Padparadscha",
+        "orange": "Orange",
+        "purple": "Purple",
+        "green": "Green",
+        "white": "White",
+        "color_change": "Color Change"
+      },
+      "treatments": {
+        "natural": "Natural (No Treatment)",
+        "heated": "Heated",
+        "no_heat": "No Heat"
+      },
+      "metal_type": "Metal Type",
+      "style": "Style"
+    },
+    "product_card": {
+      "quick_view": "Quick View",
+      "select_gemstone": "Select This Gemstone",
+      "certified": "Certified",
+      "sold": "Sold",
+      "sale": "-{{discount}}%",
+      "specifications": {
+        "color": "Color",
+        "treatment": "Treatment",
+        "shape": "Shape",
+        "weight": "{{weight}} ct",
+        "origin": "Origin",
+        "clarity": "Clarity"
+      }
+    },
+    "toolbar": {
+      "filters": "Filters",
+      "sort_by": "Sort by",
+      "products_count": "{{count}} Gemstones",
+      "sort_options": {
+        "featured": "Featured",
+        "price_ascending": "Price: Low to High",
+        "price_descending": "Price: High to Low",
+        "created_descending": "Newest First",
+        "best_selling": "Best Selling",
+        "title_ascending": "Name: A-Z",
+        "title_descending": "Name: Z-A"
+      }
+    },
+    "loading": {
+      "text": "Loading gemstones..."
+    },
+    "no_results": {
+      "title": "No gemstones found",
+      "message": "Try adjusting your filters or browse all gemstones."
+    }
+  },
+  "gemstone_info_table": {
+    "name": "Gemstone Info Table",
+    "description": "Educational table showing gemstone origins, treatments, and certificates",
+    "settings": {
+      "show_on_gemstones_only": {
+        "label": "Show on gemstone products only",
+        "info": "When enabled, only shows on products classified as gemstones"
+      },
+      "table_title": {
+        "label": "Table title",
+        "info": "Main heading for the information table"
+      },
+      "show_title": {
+        "label": "Show title"
+      },
+      "margin_top": {
+        "label": "Top margin"
+      },
+      "margin_bottom": {
+        "label": "Bottom margin"
+      },
+      "cards_per_row": {
+        "label": "Cards per row (desktop)"
+      },
+      "debug_mode": {
+        "label": "Enable debug mode",
+        "info": "Shows diagnostic information for troubleshooting"
+      }
+    },
+    "categories": {
+      "origin": "Origin",
+      "treatment": "Treatment",
+      "certificate": "Certificate"
+    },
+    "default_title": "The Gemologist's Guide",
+    "loading": {
+      "text": "Loading gemstone information...",
+      "alt_text": "Loading gemstone guide"
+    },
+    "errors": {
+      "loading_failed": "Unable to load gemstone information",
+      "loading_failed_message": "Please refresh the page or contact support if the problem persists.",
+      "no_data_title": "Gemstone Information",
+      "no_data_message": "Information about our gemstones will be available soon."
+    },
+    "debug": {
+      "title": "Gemstone Info Block Debug:",
+      "template": "Template",
+      "product_type": "Product Type",
+      "product_tags": "Product Tags",
+      "product_handle": "Product Handle",
+      "collection_handle": "Collection Handle",
+      "context_type": "Context Type",
+      "show_only_gemstones": "Show Only Gemstones",
+      "should_show": "Should Show",
+      "app_proxy_url": "App Proxy URL",
+      "block_id": "Block ID",
+      "not_showing": "Gemstone information block not showing.",
+      "not_showing_product": "Product is not classified as a gemstone, or \"Show on gemstone products only\" is enabled.",
+      "not_showing_collection": "Collection is not a gemstone collection, or \"Show on collections\" is disabled.",
+      "not_showing_page": "\"Show on pages\" is disabled.",
+      "not_showing_template": "Template \"{{template}}\" is not supported."
+    },
+    "admin": {
+      "configure_origins": "Configure Origins",
+      "manage_button": "Manage Gemstone Info",
+      "preview_button": "Preview Table",
+      "no_origins_configured": "No origins configured yet",
+      "setup_instructions": "Set up gemstone information in your app admin panel"
+    }
+  },
+  "customization_page": {
+    "title": "Complete Your Design",
+    "back_link": "← Back to Settings",
+    "progress": {
+      "gemstone_selected": "Gemstone Selected",
+      "setting_selected": "Setting Selected",
+      "complete_design": "Complete Design"
+    },
+    "preview": {
+      "your_creation": "Your Custom Creation",
+      "your_selection": "Your Selection"
+    },
+    "details": {
+      "title": "Product Details",
+      "total_carat": "Total Carat Weight",
+      "origin": "Gemstone Origin",
+      "metal_type": "Metal Type",
+      "certification": "Certification",
+      "production_time": "Production Time",
+      "natural": "Natural",
+      "certified": "Certified",
+      "available": "Available",
+      "weeks": "{{count}} weeks"
+    },
+    "customization": {
+      "ring_size": "Ring Size",
+      "size_guide": "Size Guide",
+      "chain_length": "Chain Length",
+      "inches": "{{length}} inches",
+      "engraving": "Add Engraving",
+      "optional": "(Optional)",
+      "engraving_placeholder": "Personal message (max 15 characters)",
+      "character_count": "{{current}}/{{max}} characters",
+      "gift_box": "Premium Gift Box (+${{price}})",
+      "gift_box_description": "Luxury presentation box with certificate holder",
+      "certificate_option": "Certificate Option",
+      "digital_certificate": "Digital Certificate (Emailed)",
+      "printed_certificate": "Printed Certificate (Included with order)"
+    },
+    "pricing": {
+      "summary": "Price Summary",
+      "total": "Total",
+      "premium_gift_box": "Premium Gift Box"
+    },
+    "actions": {
+      "add_to_cart": "Add to Cart",
+      "unavailable": "Unavailable",
+      "share_design": "Share Design",
+      "save_for_later": "Save for Later"
+    },
+    "trust": {
+      "certified": {
+        "title": "Certified",
+        "subtitle": "Authentic gems"
+      },
+      "shipping": {
+        "title": "Free Shipping",
+        "subtitle": "Insured delivery"
+      },
+      "returns": {
+        "title": "14 Day Returns",
+        "subtitle": "Easy returns"
+      }
+    },
+    "info": {
+      "made_to_order": "Made to order - ships within 2-3 weeks",
+      "free_resizing": "Free resizing within 30 days",
+      "lifetime_warranty": "Lifetime warranty on manufacturing defects",
+      "certificate_included": "Certificate of authenticity included"
+    },
+    "share_modal": {
+      "title": "Share Your Creation",
+      "copy_link": "Or copy link:",
+      "copy_button": "Copy",
+      "copied": "Copied!"
+    }
+  },
+  "general": {
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  }
+}

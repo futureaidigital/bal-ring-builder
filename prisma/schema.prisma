@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model ActiveProduct {
+  id        String   @id @default(cuid())
+  shop      String
+  productId String
+  handle    String
+  type      String   // 'gemstone', 'ring', or 'pendant'
+  createdAt DateTime @default(now())
+  
+  @@unique([shop, productId])
+  @@index([shop, type])
+}
+
+// Add this new model for origins management
+model OriginDefinition {
+  id          String   @id @default(cuid())
+  shop        String
+  name        String   // The actual value from product metafields (e.g., "Sri Lanka", "Heat treated", "GIA")
+  title       String   // Display title for frontend (e.g., "Ceylon Sapphires", "Heat Treatment Process")
+  description String   // Rich description for the table
+  imageUrl    String?  // URL to uploaded image
+  category    String   // "origin", "treatment", "certificate"
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([shop, name, category])
+  @@index([shop, category])
+}

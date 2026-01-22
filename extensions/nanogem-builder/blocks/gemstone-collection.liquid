@@ -1,0 +1,475 @@
+{% schema %}
+{
+  "name": "Ring Builder Collection",
+  "target": "section",
+  "enabled_on": {"templates": ["collection"]},
+  "settings": [
+    {"type": "checkbox","id": "show_steps_banner","label": "Show steps banner","default": true},
+    {"type": "checkbox","id": "auto_detect","label": "Auto-detect ring builder collections","default": true},
+    {"type": "text","id": "collection_handles","label": "Specific collection handles","placeholder": "gemstones,sapphires,ring-settings"},
+    {"type": "text","id": "gemstone_collection_url","label": "Gemstone collection URL","default": "/collections/gemstones"},
+    {"type": "text","id": "setting_collection_url","label": "Setting collection URL","default": "/collections/settings"},
+    {"type": "checkbox","id": "show_filters","label": "Show filters","default": true},
+    {"type": "range","id": "products_per_row_desktop","min": 2,"max": 5,"step": 1,"label": "Products per row (desktop)","default": 4},
+    {"type": "select","id": "products_per_row_mobile","label": "Products per row (mobile)","options": [{"value": "1", "label": "1"}, {"value": "2", "label": "2"}],"default": "2"},
+    {"type": "range","id": "products_per_page","min": 24,"max": 248,"step": 8,"label": "Products to load for filtering","default": 120,"info": "Total products to load. Display is fixed at 24 per page."}
+  ]
+}
+{% endschema %}
+
+{%- liquid
+assign is_rb = false
+assign ch = collection.handle | downcase
+
+if block.settings.collection_handles != blank
+  assign handles = block.settings.collection_handles | split: ','
+  for h in handles
+    assign clean_h = h | strip | downcase
+    if ch == clean_h
+      assign is_rb = true
+      break
+    endif
+  endfor
+endif
+
+unless is_rb
+  if block.settings.auto_detect
+    case ch
+      when 'gemstones','gemstone','stones','precious-stones','precious_stones','sapphires','rubies','emeralds','diamonds','setting','settings','ring-settings','ring_settings','mountings','rings','pendants'
+        assign is_rb = true
+    endcase
+    unless is_rb
+      assign gem_check = 'gemstone,sapphire,ruby,emerald,stone,setting,mounting,ring,pendant'
+      assign gem_words = gem_check | split: ','
+      for word in gem_words
+        if ch contains word
+          assign is_rb = true
+          break
+        endif
+      endfor
+      unless is_rb
+        if collection.title contains 'precious'
+          assign is_rb = true
+        endif
+      endunless
+    endunless
+  endif
+endunless
+-%}
+
+{%- if is_rb -%}
+<style>
+.rb-loading { 
+  text-align: center; 
+  padding: 40px; 
+  color: #666; 
+}
+#ring-builder-container {
+  min-height: 400px;
+}
+
+/* Hide ALL Prestige collection elements when ring builder is active */
+/* Hide the main collection section */
+body.rb-active .shopify-section--main-collection {
+  display: none !important;
+}
+
+/* Also hide by specific classes */
+body.rb-active .color-scheme:has(.collection) {
+  display: none !important;
+}
+
+/* Hide the container that holds everything */
+body.rb-active .container:has(.collection) {
+  display: none !important;
+}
+
+/* Hide collection toolbar */
+body.rb-active .collection-toolbar {
+  display: none !important;
+}
+
+/* Hide facets elements */
+body.rb-active facets-drawer,
+body.rb-active .facets-drawer,
+body.rb-active .facets-sidebar,
+body.rb-active safe-sticky {
+  display: none !important;
+}
+
+/* Hide product list and collection main */
+body.rb-active .collection,
+body.rb-active .collection__main,
+body.rb-active product-list,
+body.rb-active .product-list {
+  display: none !important;
+}
+
+/* Hide empty states */
+body.rb-active .empty-state {
+  display: none !important;
+}
+</style>
+
+<div id="ring-builder-container" 
+     data-collection="{{ collection.handle }}"
+     data-settings='{{ block.settings | json | escape }}'>
+  
+  <!-- Skeleton loading state -->
+  <div class="rb-skeleton-container">
+    <style>
+      .rb-skeleton-container {
+        display: grid;
+        gap: 20px;
+        margin-top: 2rem;
+        grid-template-columns: repeat({{ block.settings.products_per_row_desktop }}, 1fr);
+      }
+      
+      @media (max-width: 768px) {
+        .rb-skeleton-container {
+          grid-template-columns: repeat({{ block.settings.products_per_row_mobile }}, 1fr);
+          gap: 12px;
+        }
+      }
+      
+      /* Hide skeletons when content is loaded */
+      .rb-loaded .rb-skeleton-container {
+        display: none;
+      }
+      
+      .rb-skeleton-card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 450px;
+        position: relative;
+      }
+      
+      .rb-skeleton-image {
+        width: 100%;
+        aspect-ratio: 1/1;
+        background: #f0f0f0;
+      }
+      
+      .rb-skeleton-content {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .rb-skeleton-title {
+        height: 24px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        width: 80%;
+      }
+      
+      .rb-skeleton-price {
+        height: 20px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        width: 40%;
+        margin-top: auto;
+      }
+      
+      @keyframes rbShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+      }
+      
+      .rb-skeleton-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.3) 20%,
+          rgba(255, 255, 255, 0.5) 50%,
+          rgba(255, 255, 255, 0.3) 80%,
+          transparent 100%
+        );
+        animation: rbShimmer 2s infinite;
+        z-index: 1;
+      }
+      
+      /* Wave effect per column */
+      .rb-skeleton-card:nth-child(4n+1)::before { animation-delay: 0s; }
+      .rb-skeleton-card:nth-child(4n+2)::before { animation-delay: 0.1s; }
+      .rb-skeleton-card:nth-child(4n+3)::before { animation-delay: 0.2s; }
+      .rb-skeleton-card:nth-child(4n+4)::before { animation-delay: 0.3s; }
+    </style>
+    
+    {% for i in (1..12) %}
+      <div class="rb-skeleton-card">
+        <div class="rb-skeleton-image"></div>
+        <div class="rb-skeleton-content">
+          <div class="rb-skeleton-title"></div>
+          <div class="rb-skeleton-price"></div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  
+  <!-- Real content will be inserted here -->
+  <div class="rb-content"></div>
+</div>
+
+<script>
+(function() {
+  console.log('🔍 RING BUILDER DEBUG START');
+  
+  // Add rb-active class immediately
+  document.body.classList.add('rb-active');
+  console.log('✅ Added rb-active class to body');
+  console.log('Body classes:', document.body.className);
+  
+  // Debug function to check what's visible
+  const debugVisibility = () => {
+    console.log('🔍 CHECKING VISIBILITY:');
+    
+    // Check if rb-active is still on body
+    console.log('rb-active on body?', document.body.classList.contains('rb-active'));
+    
+    // Check main collection section
+    const mainCollectionSection = document.querySelector('.shopify-section--main-collection');
+    if (mainCollectionSection) {
+      const styles = window.getComputedStyle(mainCollectionSection);
+      console.log('Main collection section found:', {
+        display: styles.display,
+        visibility: styles.visibility,
+        opacity: styles.opacity,
+        height: styles.height
+      });
+    } else {
+      console.log('❌ No .shopify-section--main-collection found');
+    }
+    
+    // Check collection elements
+    const collectionElements = [
+      '.collection',
+      '.collection__main',
+      '.collection-toolbar',
+      'product-list',
+      '.product-list',
+      '.color-scheme',
+      '.container'
+    ];
+    
+    collectionElements.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        console.log(`Found ${elements.length} ${selector} elements`);
+        elements.forEach((el, index) => {
+          const styles = window.getComputedStyle(el);
+          if (styles.display !== 'none') {
+            console.log(`⚠️ ${selector}[${index}] is still visible:`, {
+              display: styles.display,
+              visibility: styles.visibility
+            });
+          }
+        });
+      }
+    });
+    
+    // Check if our CSS is being applied
+    const testElement = document.querySelector('.collection');
+    if (testElement) {
+      // Create a test to see if our CSS is loading
+      const shouldBeHidden = window.getComputedStyle(testElement).display;
+      console.log('Collection element display value:', shouldBeHidden);
+      console.log('Expected: none, Actual:', shouldBeHidden);
+    }
+  };
+  
+  // Hide Prestige elements with debugging
+  const hidePrestigeElements = () => {
+    console.log('🔧 Attempting to hide Prestige elements...');
+    
+    // Try multiple selectors for the main section
+    const mainSelectors = [
+      '.shopify-section--main-collection',
+      '[class*="main-collection"]',
+      'section[id*="main-collection"]'
+    ];
+    
+    mainSelectors.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        console.log(`Found ${elements.length} elements with selector: ${selector}`);
+        elements.forEach(el => {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+        });
+      }
+    });
+    
+    // Hide specific elements with force
+    const elementsToHide = [
+      '.collection-toolbar',
+      'facets-drawer',
+      '.facets-drawer', 
+      '.facets-sidebar',
+      'safe-sticky',
+      '.collection',
+      '.collection__main',
+      'product-list',
+      '.product-list',
+      '.empty-state',
+      '.color-scheme:has(.collection)',
+      '.container:has(.collection)'
+    ];
+    
+    elementsToHide.forEach(selector => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          console.log(`Hiding ${selector}`);
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+          el.style.setProperty('opacity', '0', 'important');
+          el.style.setProperty('height', '0', 'important');
+          el.style.setProperty('overflow', 'hidden', 'important');
+        });
+      } catch(e) {
+        console.log(`Error with selector ${selector}:`, e.message);
+      }
+    });
+  };
+  
+  // Initial debug
+  debugVisibility();
+  
+  // Hide immediately
+  hidePrestigeElements();
+  
+  // Check again after hiding
+  setTimeout(() => {
+    console.log('🔍 CHECKING AFTER HIDE ATTEMPT:');
+    debugVisibility();
+  }, 100);
+  
+  // Continue with ring builder loading
+  const container = document.getElementById('ring-builder-container');
+  if (!container) {
+    console.log('❌ No ring builder container found!');
+    return;
+  }
+  
+  // Get current currency from Shopify
+  const currentCurrency = window.Shopify?.currency?.active || 
+                        window.Shopify?.currency?.current || 
+                        document.querySelector('[name="currency"]')?.value ||
+                        document.querySelector('.currency-selector__value')?.textContent?.trim() ||
+                        'USD';
+
+  console.log('Detected currency:', currentCurrency);
+
+  const params = new URLSearchParams({
+    collection: container.dataset.collection,
+    settings: container.dataset.settings,
+    gemstone: new URLSearchParams(location.search).get('gemstone') || '',
+    setting: new URLSearchParams(location.search).get('setting') || '',
+    setting_variant: new URLSearchParams(location.search).get('setting_variant') || '',
+    currency: currentCurrency  // ADD THIS LINE
+  });
+  
+  console.log('Fetching from:', '/apps/nanogem-builder/ring-builder');
+  
+  fetch('/apps/nanogem-builder/ring-builder?' + params)
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.text();
+    })
+    .then(html => {
+      console.log('HTML length:', html.length);
+      console.log('Response received');
+      
+      // FIXED: Target the content div, not the whole container
+      const contentDiv = container.querySelector('.rb-content');
+      if (contentDiv) {
+        contentDiv.innerHTML = html;
+      } else {
+        // Fallback if .rb-content doesn't exist
+        container.innerHTML = html;
+      }
+      
+      // Add rb-loaded class to hide skeletons
+      container.classList.add('rb-loaded');
+      
+      // Make sure body still has rb-active class after content loads
+      document.body.classList.add('rb-active');
+      
+      // Hide Prestige elements again after content loads
+      hidePrestigeElements();
+      
+      // Debug again
+      setTimeout(() => {
+        console.log('🔍 FINAL CHECK AFTER RING BUILDER LOADS:');
+        debugVisibility();
+      }, 500);
+      
+      // Execute any scripts that were in the HTML
+      const scripts = container.querySelectorAll('script');
+      scripts.forEach(script => {
+        const newScript = document.createElement('script');
+        newScript.textContent = script.textContent;
+        document.body.appendChild(newScript);
+      });
+      
+      // Now wait for RBA to be available and initialize
+      setTimeout(() => {
+        if (window.RBA && window.RBA.init) {
+          console.log('Initializing RBA after scripts load');
+          window.RBA.init();
+          // Hide Prestige elements one more time after RBA initializes
+          hidePrestigeElements();
+        } else {
+          console.error('RBA still not found after executing scripts');
+        }
+      }, 200);
+    })
+    .catch(error => {
+      console.error('Error loading ring builder:', error);
+      // On error, hide skeletons and show error message
+      container.classList.add('rb-loaded');
+      const contentDiv = container.querySelector('.rb-content');
+      if (contentDiv) {
+        contentDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Error loading ring builder. Please refresh the page.</div>';
+      } else {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Error loading ring builder. Please refresh the page.</div>';
+      }
+    });
+
+  // ADD THE CURRENCY HANDLING CODE HERE:
+  // Listen for currency changes if your theme supports it
+  document.addEventListener('currency:changed', function(event) {
+    console.log('Currency changed to:', event.detail?.currency);
+    // Reload the ring builder with new currency
+    const container = document.getElementById('ring-builder-container');
+    if (container && container.classList.contains('rb-loaded')) {
+      location.reload(); // Simple reload, or you could re-fetch with new currency
+    }
+  });
+
+  // Alternative: listen for Shopify currency form changes
+  const currencyForm = document.querySelector('form[action="/cart/update"]');
+  if (currencyForm) {
+    const currencySelector = currencyForm.querySelector('[name="currency"]');
+    if (currencySelector) {
+      currencySelector.addEventListener('change', function() {
+        console.log('Currency changed via form to:', this.value);
+        location.reload();
+      });
+    }
+  }
+
+})();  // <-- CLOSING OF THE MAIN FUNCTION
+</script>
+{%- endif -%}

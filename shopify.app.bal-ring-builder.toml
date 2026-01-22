@@ -1,0 +1,56 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "861670647fc1eb154ee04bf998a680e0"
+name = "Bal Ring Builder"
+application_url = "https://example.com"
+embedded = true
+handle = "bal-ring-builder"
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2026-01"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/update" ]
+  uri = "/webhooks/products/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "collections/update" ]
+  uri = "/webhooks/collections/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "collections/create" ]
+  uri = "/webhooks/collections/create"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "/webhooks/products/create"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_inventory,read_price_rules,read_product_listings,read_products,read_themes,unauthenticated_read_product_listings,write_products"
+
+[auth]
+redirect_urls = [
+  "https://example.com/auth/callback",
+  "https://example.com/auth/shopify/callback",
+  "https://example.com/api/auth/callback"
+]
+
+[app_proxy]
+url = "https://example.com/api"
+subpath = "nanogem-builder"
+prefix = "apps"
+
+[pos]
+embedded = false

@@ -1,0 +1,391 @@
+{% assign gem_url = block.settings.gem_url | default: '/collections/gemstones' %}
+{% assign set_url = block.settings.set_url | default: '/collections/settings' %}
+{% assign show_on_gemstones = block.settings.show_on_gemstones %}
+{% assign show_on_settings = block.settings.show_on_settings %}
+{% assign should_show = false %}
+{% assign product_title_lower = product.title | downcase %}
+{% if request.page_type == 'collection' %}
+  {% assign collection_handle = collection.handle | downcase %}
+  {% if collection_handle contains 'gemstone' or collection_handle contains 'gemstones' or collection_handle contains 'stones' or collection_handle contains 'precious-stones' or collection_handle contains 'sapphires' or collection_handle contains 'rubies' or collection_handle contains 'emeralds' or collection_handle contains 'diamonds' %}
+    {% if show_on_gemstones %}{% assign should_show = true %}{% endif %}
+  {% elsif collection_handle contains 'setting' or collection_handle contains 'settings' or collection_handle contains 'rings' or collection_handle contains 'pendants' or collection_handle contains 'ring-settings' or collection_handle contains 'mountings' %}
+    {% if show_on_settings %}{% assign should_show = true %}{% endif %}
+  {% endif %}
+{% endif %}
+{% if request.page_type == 'product' %}
+  {% if product.type == 'Precious stone' and show_on_gemstones %}
+    {% assign should_show = true %}
+  {% elsif product.type == 'Ring' or product.type == 'Pendant' %}
+    {% if show_on_settings %}{% assign should_show = true %}{% endif %}
+  {% elsif product_title_lower contains 'custom' %}
+    {% assign should_show = true %}
+  {% endif %}
+{% endif %}
+{% if should_show %}
+<div class="rb-steps-banner-wrapper" {{ block.shopify_attributes }}>
+<style>
+.rb-steps-banner *,.rb-steps-banner *::before,.rb-steps-banner *::after{box-sizing:border-box;line-height:normal;text-transform:none;margin:0}
+.rb-steps-banner .rb-step-label,.rb-steps-banner .rb-step-browse,.rb-steps-banner .rb-step-actions,.rb-steps-banner .rb-preview-link,.rb-steps-banner .rb-step-subtitle,.rb-steps-banner .rb-step-product-name,.rb-steps-banner .rb-step-product-price,.rb-steps-banner .rb-step-complete-text{margin:0!important}
+.rb-steps-banner{background:#f8f9fa;border-radius:0px;margin-bottom:2rem;position:relative;overflow:visible;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.rb-steps-container{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;grid-template-rows:1fr!important;align-items:stretch;min-height:80px;position:relative;grid-auto-flow:column!important;grid-auto-columns:0!important;margin:0;padding:0}
+.rb-step:nth-child(1){grid-column:1!important;grid-row:1!important}
+.rb-step:nth-child(2){grid-column:2!important;grid-row:1!important}
+.rb-step:nth-child(3){grid-column:3!important;grid-row:1!important}
+.rb-steps-container>*:nth-child(n+4){display:none!important}
+.rb-step{position:relative;padding:24px 32px;display:flex;gap:16px;align-items:center;background:transparent;transition:all 0.2s ease;margin:0;flex:none}
+.rb-step:not(:last-child)::after{content:'';position:absolute;right:0;top:0;bottom:0;width:1px;background:#e2e8f0;z-index:2;transition:all 0.2s ease}
+.rb-step:not(:last-child)::before{display:none}
+.rb-step-number{font-family:var(--font-heading-family,var(--heading-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:32px;font-weight:300;color:#cbd5e1;min-width:32px;text-align:center;transition:all 0.2s ease;line-height:1;margin:0;padding:0}
+.rb-step.active .rb-step-number,.rb-step.completed .rb-step-number{color:#1e293b;font-weight:400}
+.rb-step.active{background:#fff!important;box-shadow:0 0 0 1px #e2e8f0 inset;border-radius:6px}
+.rb-step.active .rb-step-label,.rb-step.active .rb-step-subtitle,.rb-step.active .rb-step-browse,.rb-step.active .rb-step-product-name,.rb-step.active .rb-step-product-price,.rb-step.active .rb-step-complete-text,.rb-step.active .rb-preview-link{font-weight:600!important}
+.rb-step-content{flex:1 1 auto;display:flex;flex-direction:column;gap:0;min-width:0;margin:0;padding:0}
+.rb-step-label{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:16px;font-weight:500;color:#1e293b;margin:0!important;letter-spacing:normal}
+.rb-step-subtitle{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:14px;color:#64748b;margin:0!important;font-weight:400}
+.rb-step-browse{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:14px;color:#3b82f6;text-decoration:underline;text-underline-offset:2px;transition:all 0.2s ease;font-weight:500;margin:0!important}
+.rb-step-browse:hover{color:#2563eb;text-decoration:underline}
+.rb-step-product-info{display:flex;align-items:center;gap:16px}
+.rb-step-product-image{width:64px;height:64px;object-fit:cover;border-radius:6px;position:absolute;right:32px;top:50%;transform:translateY(-50%);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.rb-step-product-details{flex:1}
+.rb-step-product-name{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:14px;color:#1e293b;margin:0 0 4px 0!important;font-weight:500}
+.rb-step-product-price{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:16px;color:#1e293b;font-weight:600;margin:0 0 6px 0!important}
+.rb-step-actions{display:flex;gap:8px;font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:13px}
+.rb-step-actions a{color:#3b82f6;text-decoration:underline;text-underline-offset:2px;font-weight:500;transition:all 0.2s ease}
+.rb-step-actions a:hover{color:#2563eb}
+.rb-step-actions span{color:#cbd5e1}
+.rb-step-icon{width:64px;height:64px;color:#cbd5e1;object-fit:contain;transition:all 0.2s ease}
+.rb-step.active .rb-step-icon,.rb-step.completed .rb-step-icon{color:#64748b}
+.rb-step-icon-wrapper{position:absolute;right:32px;top:50%;transform:translateY(-50%)}
+.rb-step-complete-text{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));font-size:16px;font-weight:600;color:#1e293b;margin:0!important}
+.rb-preview-link{font-family:var(--font-body-family,var(--text-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif));color:#3b82f6;text-decoration:underline;text-underline-offset:2px;font-size:14px;font-weight:500;transition:all 0.2s ease;margin:0!important}
+.rb-preview-link:hover{color:#2563eb}
+.rb-step-complete-icon{width:32px;height:32px;background:#10b981;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.rb-step:not(.active):hover{background:rgba(255,255,255,0.5)}
+.mobile-hide{display:inline}
+.mobile-show{display:none}
+@media(max-width:1000px){
+.mobile-hide{display:none!important}
+.mobile-show{display:inline!important}
+.rb-steps-banner-wrapper{--gutter:var(--container-gutter,1.25rem);margin-left:calc(-1*var(--gutter));margin-right:calc(-1*var(--gutter));width:calc(100% + 2*var(--gutter));flex:0 0 auto!important;max-width:none!important;margin-bottom:0!important;margin-top:0!important;display:block!important;position:relative;padding:0!important}
+.rb-steps-banner{padding:0;border-radius:0;box-shadow:0 1px 2px rgba(0,0,0,0.05);background:#f8f9fa;margin:0 0 1rem 0!important;flex:none!important}
+.rb-steps-container{grid-template-columns:1fr 1fr 1fr!important;gap:0;min-height:52px;height:auto;display:grid!important;flex:none!important;width:100%!important;margin:0!important;padding:0!important}
+.rb-step{padding:12px 6px 12px 10px;display:flex!important;align-items:center;justify-content:flex-start;height:100%;gap:0!important;background:#f8f8f8;position:relative;flex-direction:row;flex:none!important;min-width:0;overflow:hidden;box-sizing:border-box;margin:0!important}
+.rb-step:not(:last-child)::after{top:20%;bottom:20%;background:#e2e8f0;opacity:0.7}
+.rb-step.active{background:#fff!important;box-shadow:none;border-radius:0;padding:12px 6px 12px 10px!important}
+.rb-step-number{font-size:20px;font-weight:400;flex:0 0 18px;width:18px;min-width:unset!important;max-width:18px!important;padding:0;margin:0 6px 0 0;line-height:1;text-align:center;display:block!important}
+.rb-step.active .rb-step-number{font-weight:600}
+.rb-step-subtitle,.rb-step-product-image,.rb-step-product-price,.rb-step-product-name,.rb-step-complete-icon,.rb-step-complete-text,.rb-step-product-info,.rb-step-product-details,.rb-step-product-info.mobile-hide{display:none!important}
+.rb-step-content{flex:1 1 auto;gap:0;padding:0;margin:0;min-width:0;max-width:100%;overflow:hidden;display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center}
+.rb-step-label{font-size:13px!important;line-height:1.2!important;margin:0!important;padding:0!important;text-align:left!important;white-space:nowrap}
+.rb-step-browse,.rb-preview-link{display:block!important;font-size:11px!important;font-weight:500!important;line-height:1.3;margin:1px 0 0 0!important;padding:0!important;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-align:left!important}
+.rb-step-actions{display:flex!important;gap:4px;font-size:11px!important;margin:1px 0 0 0!important;padding:0!important;position:static!important;max-width:100%}
+.rb-step-actions a{font-size:11px!important;font-weight:500!important;white-space:nowrap;margin:0!important;padding:0!important}
+.rb-step-actions span{color:#cbd5e1;margin:0 1px!important;padding:0!important}
+.rb-step-actions.mobile-hide{display:none!important}
+.rb-step-content>*{margin-left:0!important;padding-left:0!important;margin-bottom:0!important;margin-top:0!important}
+}
+</style>
+<div class="rb-steps-banner" id="rb-steps-banner-{{ block.id }}">
+  <div class="rb-steps-container">
+    <div class="rb-step" data-step="1" id="rb-step-1-{{ block.id }}">
+      <div class="rb-step-number">1</div>
+      <div class="rb-step-content" id="step-1-product-{{ block.id }}">
+        <div class="rb-step-label"><span class="mobile-hide">{{ block.settings.gemstone_label }}</span><span class="mobile-show">Gemstone</span></div>
+        <a href="{{ gem_url }}" class="rb-step-browse">{{ block.settings.browse_text }}</a>
+      </div>
+      <div class="rb-step-icon-wrapper mobile-hide">
+        {% if block.settings.gemstone_icon %}
+          <img src="{{ block.settings.gemstone_icon | img_url: 'master' }}" alt="Gemstone" class="rb-step-icon" />
+        {% else %}
+          <img src="https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/diamond.svg" alt="Gemstone" class="rb-step-icon" />
+        {% endif %}
+      </div>
+    </div>
+    <div class="rb-step" data-step="2" id="rb-step-2-{{ block.id }}">
+      <div class="rb-step-number">2</div>
+      <div class="rb-step-content" id="step-2-product-{{ block.id }}">
+        <div class="rb-step-label"><span class="mobile-hide">{{ block.settings.setting_label }}</span><span class="mobile-show">Setting</span></div>
+        <a href="{{ set_url }}" class="rb-step-browse">{{ block.settings.browse_text }}</a>
+      </div>
+      <div class="rb-step-icon-wrapper mobile-hide">
+        {% if block.settings.setting_icon %}
+          <img src="{{ block.settings.setting_icon | img_url: 'master' }}" alt="Setting" class="rb-step-icon" />
+        {% else %}
+          <img src="https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/setting.svg" alt="Setting" class="rb-step-icon" />
+        {% endif %}
+      </div>
+    </div>
+    <div class="rb-step" data-step="3" id="rb-step-3-{{ block.id }}">
+      <div class="rb-step-number">3</div>
+      <div class="rb-step-content" id="step-3-product-{{ block.id }}">
+        <div class="rb-step-label">
+          <span class="mobile-hide">{{ block.settings.complete_label }}</span>
+          <span class="mobile-show">Complete</span>
+        </div>
+        <div class="rb-step-subtitle mobile-hide">Make it yours</div>
+      </div>
+      <div class="rb-step-icon-wrapper mobile-hide">
+        {% if block.settings.complete_icon %}
+          <img src="{{ block.settings.complete_icon | img_url: 'master' }}" alt="Complete my piece" class="rb-step-icon" />
+        {% else %}
+          <img src="https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/ring.svg" alt="Complete my piece" class="rb-step-icon" />
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){'use strict';
+const S{{ block.id | remove: '-' }}={
+bid:'{{ block.id }}',
+st:{g:null,s:null,sv:null,cs:1,gu:'{{ gem_url }}',su:'{{ set_url }}'},
+init(){
+this.purl();this.upds();this.upas();
+{% if request.page_type == 'product' %}this.ccp();this.upds();this.upas();{% endif %}
+},
+purl(){const u=new URLSearchParams(window.location.search);this.st.g=u.get('gemstone');this.st.s=u.get('setting');this.st.sv=u.get('setting_variant')},
+ccp(){
+{% if product %}
+const t='{{ product.type }}',h='{{ product.handle }}';
+if(t==='Precious stone')this.st.g=h;
+else if(t==='Ring'||t==='Pendant'){this.st.s=h;const v=new URLSearchParams(window.location.search).get('variant');if(v)this.st.sv=v}
+{% endif %}
+},
+upds(){
+this.st.g?this.lsp(this.st.g,1,'gemstone'):this.ses(1,'gemstone');
+this.st.s?this.lsp(this.st.s,2,'setting'):this.ses(2,'setting');
+this.upcs()
+},
+upcs(){
+const c3=document.getElementById('step-3-product-'+this.bid),e3=document.getElementById('rb-step-3-'+this.bid);
+if(this.st.g&&this.st.s&&c3){
+e3.classList.add('active','completed');
+let u='/products/custom-ring-preview?gemstone='+this.st.g+'&setting='+this.st.s;
+if(this.st.sv)u+='&setting_variant='+this.st.sv;
+c3.innerHTML=`<div class="rb-step-label"><span class="mobile-hide">Design Complete</span><span class="mobile-show">Complete</span></div><a href="${u}" class="rb-step-browse">Preview</a>`
+}
+},
+upas(){
+const ss=document.querySelectorAll('#rb-steps-banner-'+this.bid+' .rb-step');
+ss.forEach(s=>s.classList.remove('active'));
+const p=window.location.pathname,
+gc=p.includes('/collections/gemstone')||p.includes('/collections/stones')||p.includes('/collections/sapphires')||p.includes('/collections/rubies')||p.includes('/collections/emeralds')||p.includes('/collections/diamonds'),
+sc=p.includes('/collections/setting')||p.includes('/collections/rings')||p.includes('/collections/pendants')||p.includes('/collections/mountings'),
+pp=p.includes('/products/');
+if(pp){
+if(p.includes('custom-ring-preview')){document.getElementById('rb-step-3-'+this.bid).classList.add('active');return}
+{% if product %}
+const t='{{ product.type }}';
+document.getElementById('rb-step-'+(t==='Precious stone'?'1':t==='Ring'||t==='Pendant'?'2':'1')+'-'+this.bid).classList.add('active')
+{% else %}
+document.getElementById('rb-step-1-'+this.bid).classList.add('active')
+{% endif %}
+}else document.getElementById('rb-step-'+(gc?'1':sc?'2':'1')+'-'+this.bid).classList.add('active')
+},
+ses(n,t){
+const c=document.getElementById('step-'+n+'-product-'+this.bid);
+if(!c)return;
+const ig=t==='gemstone',
+l=ig?'{{ block.settings.gemstone_label }}':'{{ block.settings.setting_label }}',
+ml=ig?'Gemstone':'Setting',
+bl='{{ block.settings.browse_text }}',
+bu=ig?this.st.gu:this.st.su,
+is=ig?'{% if block.settings.gemstone_icon %}{{ block.settings.gemstone_icon | img_url: "master" }}{% else %}https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/diamond.svg{% endif %}':'{% if block.settings.setting_icon %}{{ block.settings.setting_icon | img_url: "master" }}{% else %}https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/setting.svg{% endif %}',
+ia=ig?'Gemstone':'Setting';
+let u=bu;const ps=[];
+if(ig&&this.st.s){ps.push('setting='+this.st.s);if(this.st.sv)ps.push('setting_variant='+this.st.sv)}
+else if(!ig&&this.st.g)ps.push('gemstone='+this.st.g);
+if(ps.length>0)u+='?'+ps.join('&');
+c.innerHTML=`<div class="rb-step-label"><span class="mobile-hide">${l}</span><span class="mobile-show">${ml}</span></div><a href="${u}" class="rb-step-browse">${bl}</a>`;
+const se=c.closest('.rb-step');
+let iw=se.querySelector('.rb-step-icon-wrapper');
+if(!iw){iw=document.createElement('div');iw.className='rb-step-icon-wrapper mobile-hide';iw.innerHTML='<img src="'+is+'" alt="'+ia+'" class="rb-step-icon" />';se.appendChild(iw)}
+else{iw.style.display='';iw.innerHTML='<img src="'+is+'" alt="'+ia+'" class="rb-step-icon" />'}
+},
+async lsp(h,n,t){
+try{
+const r=await fetch('/products/'+h+'.js');
+if(!r.ok)return;
+const p=await r.json(),c=document.getElementById('step-'+n+'-product-'+this.bid);
+if(!c)return;
+let dn='',di=p.featured_image,pr=p.price;
+if(t==='gemstone'){
+const cm=p.title.match(/(\d+\.?\d*)\s*ct/i),ct=cm?cm[1]:'';
+let sh='Gemstone';
+if(p.metafields?.custom?.gemstone_shape)sh=p.metafields.custom.gemstone_shape;
+else{const m=p.title.match(/(\w+)\s*-\s*[\d.]+\s*ct/i);if(m)sh=m[1].charAt(0).toUpperCase()+m[1].slice(1)}
+dn=ct+'ct '+sh
+}else{
+dn=p.title.split('-')[0].trim();
+if(this.st.sv){const v=p.variants.find(x=>x.id==this.st.sv);if(v){if(v.featured_image?.src)di=v.featured_image.src;pr=v.price}}
+}
+const mf='{{ shop.money_format | escape }}',cc='{{ shop.currency }}',pv=(parseFloat(pr)/100).toFixed(2);
+let fp=mf.replace(/\{\{\s*amount\s*\}\}/g,pv);
+if(fp===mf)fp=cc+' '+pv;
+let vu='/products/'+h,cu=t==='gemstone'?this.st.gu:this.st.su;
+if(t==='gemstone'&&this.st.s){vu+='?setting='+this.st.s;if(this.st.sv)vu+='&setting_variant='+this.st.sv;cu+='?setting='+this.st.s;if(this.st.sv)cu+='&setting_variant='+this.st.sv}
+else if(t==='setting'&&this.st.g){vu+='?gemstone='+this.st.g;if(this.st.sv)vu+='&variant='+this.st.sv;cu+='?gemstone='+this.st.g}
+c.innerHTML=`<div class="rb-step-label"><span class="mobile-hide">${t==='gemstone'?'Gemstone':'Setting'}</span><span class="mobile-show">${t==='gemstone'?'Gemstone':'Setting'}</span></div><div class="rb-step-actions mobile-show"><a href="${vu}">View</a><span>|</span><a href="${cu}">{{ block.settings.change_text }}</a></div><div class="rb-step-product-info mobile-hide"><img src="${di}?width=100&height=100" alt="${p.title}" class="rb-step-product-image"><div class="rb-step-product-details"><div class="rb-step-product-name">${dn}</div><div class="rb-step-product-price">${fp}</div><div class="rb-step-actions"><a href="${vu}">View</a><span>|</span><a href="${cu}">{{ block.settings.change_text }}</a></div></div></div>`;
+const se=c.closest('.rb-step');
+if(se){se.classList.add('completed');const iw=se.querySelector('.rb-step-icon-wrapper');if(iw)iw.style.display='none'}
+this.upas()
+}catch(e){console.error('Error:',e)}
+}
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>S{{ block.id | remove: '-' }}.init());
+else S{{ block.id | remove: '-' }}.init()
+})();
+</script>
+</div>
+{% endif %}
+{% schema %}
+{
+  "name": "Ring Builder Steps",
+  "target": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Display Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_gemstones",
+      "label": "Show on gemstone products",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_settings",
+      "label": "Show on setting products",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "URLs"
+    },
+    {
+      "type": "text",
+      "id": "gem_url",
+      "label": "Gemstones collection URL",
+      "default": "/collections/gemstones"
+    },
+    {
+      "type": "text",
+      "id": "set_url",
+      "label": "Settings collection URL",
+      "default": "/collections/settings"
+    },
+    {
+      "type": "header",
+      "content": "Text Content"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "Show banner title",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "banner_title",
+      "label": "Banner title",
+      "default": "Create My Piece"
+    },
+    {
+      "type": "text",
+      "id": "setting_label",
+      "label": "Setting step label",
+      "default": "Choose Setting"
+    },
+    {
+      "type": "text",
+      "id": "gemstone_label",
+      "label": "Gemstone step label",
+      "default": "Choose Gemstone"
+    },
+    {
+      "type": "text",
+      "id": "complete_label",
+      "label": "Complete step label",
+      "default": "Complete my piece"
+    },
+    {
+      "type": "text",
+      "id": "browse_text",
+      "label": "Browse link text",
+      "default": "Browse"
+    },
+    {
+      "type": "text",
+      "id": "change_text",
+      "label": "Change link text",
+      "default": "Change"
+    },
+    {
+      "type": "text",
+      "id": "preview_text",
+      "label": "Preview link text",
+      "default": "Preview"
+    },
+    {
+      "type": "header",
+      "content": "Icons"
+    },
+    {
+      "type": "image_picker",
+      "id": "setting_icon",
+      "label": "Setting icon"
+    },
+    {
+      "type": "image_picker",
+      "id": "gemstone_icon",
+      "label": "Gemstone icon"
+    },
+    {
+      "type": "image_picker",
+      "id": "complete_icon",
+      "label": "Complete icon"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "link_color",
+      "label": "Link color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "active_color",
+      "label": "Active step color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "complete_color",
+      "label": "Complete icon color",
+      "default": "#10b981"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "default": "#e0e0e0"
+    }
+  ]
+}
+{% endschema %}
