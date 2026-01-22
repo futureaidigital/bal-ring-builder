@@ -694,23 +694,58 @@ function generateInfoTable(product, type, session) {
     });
   } else {
     // Setting fields
-    if (product.type) {
-      html += `<div class="rb-info-row"><dt>Type</dt><dd>${product.type}</dd></div>`;
+    const selectedVariant = product.selected_or_first_available_variant;
+    const variantMeta = selectedVariant?.metafields || {};
+
+    // Style - try metafield first, then extract from tags
+    let style = product.metafields.ring_style || product.metafields.product_style || product.metafields.style;
+    if (!style && product.tags) {
+      // Known style keywords to look for in tags
+      const styleKeywords = ['Solitaire', 'Halo', 'Trilogy', 'Three Stone', 'Pavé', 'Pave', 'Channel', 'Bezel', 'Vintage', 'Cathedral', 'Split Shank', 'Twisted', 'Classic', 'Modern', 'Art Deco', 'Hidden Halo'];
+      for (const tag of product.tags) {
+        for (const keyword of styleKeywords) {
+          if (tag.toLowerCase() === keyword.toLowerCase() || tag.toLowerCase().includes(keyword.toLowerCase())) {
+            style = keyword;
+            break;
+          }
+        }
+        if (style) break;
+      }
     }
-    
-    const style = product.metafields.ring_style || product.metafields.product_style;
     if (style) {
       html += `<div class="rb-info-row"><dt>Style</dt><dd>${style}</dd></div>`;
     }
-    
-    if (product.metafields.center_stone_shape) {
-      html += `<div class="rb-info-row"><dt>Fits Shape</dt><dd>${product.metafields.center_stone_shape}</dd></div>`;
+
+    // Fits Shape - try product metafield, then variant metafield
+    const centerShape = product.metafields.center_stone_shape || variantMeta.center_stone_shape;
+    if (centerShape) {
+      html += `<div class="rb-info-row"><dt>Fits Shape</dt><dd>${centerShape}</dd></div>`;
     }
 
-    // Check for metal weight in selected variant
-    const selectedVariant = product.selected_or_first_available_variant;
-    if (selectedVariant.metafields && selectedVariant.metafields.metal_weight) {
-      html += `<div class="rb-info-row"><dt>Metal Weight</dt><dd>${selectedVariant.metafields.metal_weight}</dd></div>`;
+    // Center Stone Carat Range
+    const caratRange = product.metafields.center_stone_carat_weight || variantMeta.center_stone_carat_weight;
+    if (caratRange) {
+      html += `<div class="rb-info-row"><dt>Fits Carat</dt><dd>${caratRange}</dd></div>`;
+    }
+
+    // Metal Type - from variant
+    const metalType = variantMeta.metal_type || product.metafields.metal_type;
+    if (metalType) {
+      html += `<div class="rb-info-row"><dt>Metal Type</dt><dd>${metalType}</dd></div>`;
+    }
+
+    // Metal Weight - from variant
+    const metalWeight = variantMeta.metal_weight || product.metafields.metal_weight;
+    if (metalWeight) {
+      html += `<div class="rb-info-row"><dt>Metal Weight</dt><dd>${metalWeight}</dd></div>`;
+    }
+
+    // Side Stones info
+    const sideStoneType = variantMeta.side_stones_type;
+    const sideStoneWeight = variantMeta.side_stones_total_carat_weight;
+    if (sideStoneType || sideStoneWeight) {
+      const sideInfo = [sideStoneType, sideStoneWeight].filter(Boolean).join(' - ');
+      html += `<div class="rb-info-row"><dt>Side Stones</dt><dd>${sideInfo}</dd></div>`;
     }
   }
   
