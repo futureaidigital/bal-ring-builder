@@ -70,7 +70,13 @@ export const loader = async ({ request }) => {
   try {
     // Authenticate the request
     const { admin, session } = await authenticate.public.appProxy(request);
-    
+
+    // Check if admin is available (session exists)
+    if (!admin) {
+      console.error('Ring builder error: No admin session found. App may not be installed on this store.');
+      return createErrorResponse('App not properly installed. Please reinstall the app from the Shopify App Store.');
+    }
+
     // Parse request parameters
     const params = parseRequestParams(request.url);
     
