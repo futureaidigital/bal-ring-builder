@@ -7,8 +7,8 @@ const MAX_VARIANTS_FETCH = 25;   // Reduced from 100 to stay under query cost li
 const MAX_IMAGES_FETCH = 5;      // Reduced from 15 to stay under query cost limit
 
 const DEFAULT_SETTINGS = {
-  gemUrl: '/collections/gemstones',
-  setUrl: '/collections/settings',
+  gemUrl: '/collections/loose-white-lab-grown-diamonds',
+  setUrl: '/collections/ring-settings',
   perPage: 120,
   perRowDesktop: 4,
   perRowMobile: 2,

@@ -40,8 +40,8 @@ export const loader = async ({ request }) => {
       gemstone_button_text: url.searchParams.get('gemstone_button_text') || 'Select a Setting →',
       setting_button_text: url.searchParams.get('setting_button_text') || 'Select a Gemstone →',
       add_both_text: url.searchParams.get('add_both_text') || 'Add Both to Cart',
-      gemstone_collection: url.searchParams.get('gemstone_collection') || 'gemstones',
-      settings_collection: url.searchParams.get('settings_collection') || 'settings'
+      gemstone_collection: url.searchParams.get('gemstone_collection') || 'loose-white-lab-grown-diamonds',
+      settings_collection: url.searchParams.get('settings_collection') || 'ring-settings'
     };
     
     // URL parameters
