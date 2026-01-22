@@ -3843,6 +3843,8 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           let shownCount = 0;
           let hiddenByShape = 0;
           let hiddenByCarat = 0;
+          let settingsWithCaratData = 0;
+          let settingsWithoutCaratData = 0;
 
           products.forEach(product => {
             let shouldShow = true;
@@ -3874,13 +3876,37 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             }
 
             // Check carat weight filter for settings
-            if (this.st.gc && productType === 'setting' && shouldShow) {
+            if (productType === 'setting') {
               const minCarat = parseFloat(product.dataset.caratMin);
               const maxCarat = parseFloat(product.dataset.caratMax);
-              if (!(minCarat && maxCarat && this.st.gc >= minCarat && this.st.gc <= maxCarat)) {
-                shouldShow = false;
-                hiddenByCarat++;
-                console.log('Setting HIDDEN - carat mismatch:', minCarat, '-', maxCarat, 'vs gemstone:', this.st.gc, '| Product:', product.dataset.productId);
+              const hasValidCaratData = !isNaN(minCarat) && !isNaN(maxCarat) && minCarat > 0 && maxCarat > 0;
+
+              // Track how many settings have valid carat data
+              if (hasValidCaratData) {
+                settingsWithCaratData++;
+              } else {
+                settingsWithoutCaratData++;
+              }
+
+              // Always log setting carat data for debugging
+              console.log('Setting carat attrs:', {
+                productId: product.dataset.productId,
+                caratMinAttr: product.dataset.caratMin,
+                caratMaxAttr: product.dataset.caratMax,
+                parsedMin: minCarat,
+                parsedMax: maxCarat,
+                hasValidData: hasValidCaratData,
+                gemstoneCarat: this.st.gc
+              });
+
+              if (this.st.gc && shouldShow && hasValidCaratData) {
+                if (!(this.st.gc >= minCarat && this.st.gc <= maxCarat)) {
+                  shouldShow = false;
+                  hiddenByCarat++;
+                  console.log('Setting HIDDEN - carat mismatch:', minCarat, '-', maxCarat, 'vs gemstone:', this.st.gc, '| Product:', product.dataset.productId);
+                } else {
+                  console.log('Setting SHOWN - carat match:', minCarat, '-', maxCarat, 'includes gemstone:', this.st.gc, '| Product:', product.dataset.productId);
+                }
               }
             }
             
@@ -3995,6 +4021,8 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           console.log('Shown:', filteredProducts.length);
           console.log('Hidden by shape:', hiddenByShape);
           console.log('Hidden by carat:', hiddenByCarat);
+          console.log('Settings WITH carat data:', settingsWithCaratData);
+          console.log('Settings WITHOUT carat data:', settingsWithoutCaratData);
           console.log('======================');
           
           // ADDED: Sort the filtered products
