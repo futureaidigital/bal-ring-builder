@@ -1829,8 +1829,8 @@ function getRingBuilderCSS() {
     .mobile-hide-block{display:block}
     .mobile-show-block{display:none}
     
-    /* Context Banner (hidden by default) */
-    .rb-ctx{display:none!important}
+    /* Context Banner - shown when gemstone/setting context exists */
+    .rb-ctx{display:block}
     
     /* ============================================
        2. GRID & LAYOUT SYSTEM
@@ -2723,6 +2723,7 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           ppp: ${PRODUCTS_PER_PAGE},
           tp: 1,
           gc: null,
+          gsh: null, // gemstone shape
           sr: null,
           vi: {},
           currency: '${currencyCode}',
@@ -2784,12 +2785,23 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           // ADD THIS LINE
           this.st.sortBy = u.get('sort') || '';
           
-          // Extract carat weight from gemstone parameter
+          // Extract carat weight and shape from gemstone parameter
           if (this.st.sg) {
             const caratMatch = this.st.sg.match(/(\d+)[-_](\d+)[-_]ct/i);
             if (caratMatch) {
               const caratValue = parseFloat(caratMatch[1] + '.' + caratMatch[2] + (caratMatch[2].length === 1 ? '0' : ''));
               if (caratValue > 0) this.st.gc = caratValue;
+            }
+
+            // Extract shape from gemstone handle
+            const knownShapes = ['round', 'oval', 'pear', 'emerald', 'cushion', 'princess', 'marquise', 'radiant', 'asscher', 'heart'];
+            const handleLower = this.st.sg.toLowerCase();
+            for (const shape of knownShapes) {
+              if (handleLower.includes(shape)) {
+                this.st.gsh = shape.charAt(0).toUpperCase() + shape.slice(1);
+                console.log('Extracted gemstone shape from handle:', this.st.gsh);
+                break;
+              }
             }
           }
           
@@ -2847,14 +2859,11 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           this.updateContextBanner();
           this.updateShapeFilterStates();
 
-          // Apply initial sorting if sort parameter exists
-          if (this.st.sortBy) {
+          // Apply initial filters/sorting if needed
+          const needsFiltering = Object.keys(this.st.af).length || this.st.gc || this.st.gsh || this.st.sr || this.st.sortBy;
+          if (needsFiltering) {
             setTimeout(() => {
-              if (Object.keys(this.st.af).length || this.st.gc || this.st.sr) {
-                this.applyFilters();
-              } else {
-                this.showPage();
-              }
+              this.applyFilters();
             }, 200);
           }
 
@@ -3799,12 +3808,23 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           products.forEach(product => {
             let shouldShow = true;
             
+            // Check shape compatibility for settings when a gemstone is selected
+            if (this.st.gsh && product.dataset.productType === 'setting') {
+              const settingShape = (product.dataset.shape || '').toLowerCase();
+              const gemShape = this.st.gsh.toLowerCase();
+              if (settingShape && settingShape !== gemShape) {
+                shouldShow = false;
+                console.log('Setting hidden - shape mismatch:', settingShape, 'vs gemstone:', gemShape);
+              }
+            }
+
             // Check carat weight filter for settings
             if (this.st.gc && product.dataset.productType === 'setting') {
               const minCarat = parseFloat(product.dataset.caratMin);
               const maxCarat = parseFloat(product.dataset.caratMax);
               if (!(minCarat && maxCarat && this.st.gc >= minCarat && this.st.gc <= maxCarat)) {
                 shouldShow = false;
+                console.log('Setting hidden - carat mismatch:', minCarat, '-', maxCarat, 'vs gemstone:', this.st.gc);
               }
             }
             
@@ -4345,18 +4365,27 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
         updateContextBanner() {
           let existingBanner = document.querySelector('.rb-ctx');
           if (existingBanner) existingBanner.remove();
-          
+
           if (this.st.sg || this.st.ss) {
             const contextBanner = document.createElement('div');
             contextBanner.className = 'rb-ctx';
             let message = '';
-            
+
             if (this.st.sg && !this.st.ss) {
-              message = 'Selecting a setting for your <strong>' + this.st.sg.replace(/-/g, ' ') + '</strong>';
+              // Building context message for selecting a setting
+              const parts = [];
+              if (this.st.gsh) parts.push('<strong>' + this.st.gsh + '</strong> shape');
+              if (this.st.gc) parts.push('<strong>' + this.st.gc + ' ct</strong>');
+
+              if (parts.length > 0) {
+                message = 'Showing settings compatible with your ' + parts.join(', ') + ' diamond';
+              } else {
+                message = 'Selecting a setting for your <strong>' + this.st.sg.replace(/-/g, ' ') + '</strong>';
+              }
             } else if (this.st.ss && !this.st.sg) {
               message = 'Selecting a diamond for your <strong>' + this.st.ss.replace(/-/g, ' ') + '</strong>';
             }
-            
+
             if (message) {
               contextBanner.innerHTML = '<p>' + message + '</p>';
               const insertBefore = document.querySelector('.gf-bar') || document.querySelector('.ge-grid');
