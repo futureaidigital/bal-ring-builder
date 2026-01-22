@@ -1,24 +1,12 @@
 // app/utils/db.server.js
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client";
 
 let prisma;
 
-// Check if we should use Turso (when TURSO_DATABASE_URL and auth token are present)
-const tursoUrl = process.env.TURSO_DATABASE_URL;
-const tursoToken = process.env.TURSO_AUTH_TOKEN;
-
-if (tursoUrl && tursoToken) {
-  // Use Turso with libSQL adapter in production
-  const libsql = createClient({
-    url: tursoUrl,
-    authToken: tursoToken,
-  });
-  const adapter = new PrismaLibSQL(libsql);
-  prisma = new PrismaClient({ adapter });
+// Use global to prevent multiple instances in development
+if (process.env.NODE_ENV === "production") {
+  prisma = new PrismaClient();
 } else {
-  // Use local SQLite in development
   if (!global.__prisma) {
     global.__prisma = new PrismaClient();
   }
