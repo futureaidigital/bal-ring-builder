@@ -31,18 +31,20 @@
     assign is_preview = true
   endif
   
-  # Check if it's a gemstone - MORE FLEXIBLE
-  if pt contains 'stone' or pt contains 'ruby' or pt contains 'sapphire' or pt contains 'emerald' or pt contains 'diamond'
+  # Check if it's a diamond/gemstone (loose stone)
+  if pt contains 'stone' or pt contains 'loose' or pt contains 'diamond'
     assign is_gem = true
-  elsif product.tags contains 'gemstone' or product.tags contains 'gem' or product.tags contains 'stone'
+  elsif product.tags contains 'gemstone' or product.tags contains 'Loose Stone' or product.tags contains 'loose stone'
+    assign is_gem = true
+  elsif product.tags contains 'White Lab Diamond' or product.tags contains 'Lab Diamond'
     assign is_gem = true
   endif
-  
+
   # Check if it's a setting
   unless is_gem
     if pt contains 'ring' or pt contains 'pendant' or pt contains 'setting' or pt contains 'mount'
       assign is_set = true
-    elsif product.tags contains 'Setting_Ring' or product.tags contains 'Setting_Pendant' or product.tags contains 'setting'
+    elsif product.tags contains 'Setting_Ring' or product.tags contains 'Setting_Pendant' or product.tags contains 'Ring Setting' or product.tags contains 'Pendant Setting'
       assign is_set = true
     endif
   endunless
