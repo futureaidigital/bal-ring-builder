@@ -3816,39 +3816,59 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
         
         // Apply active filters
         applyFilters() {
+          console.log('=== APPLY FILTERS DEBUG ===');
+          console.log('State:', {
+            selectedGemstone: this.st.sg,
+            selectedSetting: this.st.ss,
+            gemstoneShape: this.st.gsh,
+            settingCompatibleShape: this.st.ssh,
+            gemstoneCarat: this.st.gc,
+            activeFilters: this.st.af
+          });
+
           const products = document.querySelectorAll('.ge-item');
           const filteredProducts = [];
-          
+          let shownCount = 0;
+          let hiddenByShape = 0;
+          let hiddenByCarat = 0;
+
           products.forEach(product => {
             let shouldShow = true;
-            
+            const productShape = product.dataset.shape || '';
+            const productType = product.dataset.productType;
+
             // Check shape compatibility for settings when a gemstone is selected
-            if (this.st.gsh && product.dataset.productType === 'setting') {
-              const settingShape = (product.dataset.shape || '').toLowerCase();
+            if (this.st.gsh && productType === 'setting') {
+              const settingShape = productShape.toLowerCase();
               const gemShape = this.st.gsh.toLowerCase();
               if (settingShape && settingShape !== gemShape) {
                 shouldShow = false;
-                console.log('Setting hidden - shape mismatch:', settingShape, 'vs gemstone:', gemShape);
+                hiddenByShape++;
+                console.log('Setting HIDDEN - shape mismatch:', settingShape, 'vs gemstone:', gemShape, '| Product:', product.dataset.productId);
               }
             }
 
             // Check shape compatibility for diamonds when a setting is selected
-            if (this.st.ssh && product.dataset.productType === 'gemstone') {
-              const diamondShape = (product.dataset.shape || '').toLowerCase();
+            if (this.st.ssh && productType === 'gemstone') {
+              const diamondShape = productShape.toLowerCase();
               const settingCompatibleShape = this.st.ssh.toLowerCase();
               if (diamondShape && diamondShape !== settingCompatibleShape) {
                 shouldShow = false;
-                console.log('Diamond hidden - shape mismatch:', diamondShape, 'vs setting compatible:', settingCompatibleShape);
+                hiddenByShape++;
+                console.log('Diamond HIDDEN - shape mismatch:', diamondShape, 'vs setting compatible:', settingCompatibleShape, '| Product:', product.dataset.productId);
+              } else {
+                console.log('Diamond SHOWN - shape match:', diamondShape, '| Product:', product.dataset.productId);
               }
             }
 
             // Check carat weight filter for settings
-            if (this.st.gc && product.dataset.productType === 'setting') {
+            if (this.st.gc && productType === 'setting' && shouldShow) {
               const minCarat = parseFloat(product.dataset.caratMin);
               const maxCarat = parseFloat(product.dataset.caratMax);
               if (!(minCarat && maxCarat && this.st.gc >= minCarat && this.st.gc <= maxCarat)) {
                 shouldShow = false;
-                console.log('Setting hidden - carat mismatch:', minCarat, '-', maxCarat, 'vs gemstone:', this.st.gc);
+                hiddenByCarat++;
+                console.log('Setting HIDDEN - carat mismatch:', minCarat, '-', maxCarat, 'vs gemstone:', this.st.gc, '| Product:', product.dataset.productId);
               }
             }
             
@@ -3958,7 +3978,12 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             }
           });
           
-          console.log('Total filtered products:', filteredProducts.length);
+          console.log('=== FILTER RESULTS ===');
+          console.log('Total products:', products.length);
+          console.log('Shown:', filteredProducts.length);
+          console.log('Hidden by shape:', hiddenByShape);
+          console.log('Hidden by carat:', hiddenByCarat);
+          console.log('======================');
           
           // ADDED: Sort the filtered products
           const sortedProducts = this.sortProducts(filteredProducts);
