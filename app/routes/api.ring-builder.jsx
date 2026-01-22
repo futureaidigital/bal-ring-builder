@@ -2723,7 +2723,8 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           ppp: ${PRODUCTS_PER_PAGE},
           tp: 1,
           gc: null,
-          gsh: null, // gemstone shape
+          gsh: null, // gemstone shape (for filtering settings)
+          ssh: null, // setting compatible shape (for filtering diamonds)
           sr: null,
           vi: {},
           currency: '${currencyCode}',
@@ -2805,6 +2806,19 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             }
           }
           
+          // Extract shape from setting handle (for filtering diamonds by compatible shape)
+          if (this.st.ss) {
+            const knownShapes = ['round', 'oval', 'pear', 'emerald', 'cushion', 'princess', 'marquise', 'radiant', 'asscher', 'heart'];
+            const settingHandleLower = this.st.ss.toLowerCase();
+            for (const shape of knownShapes) {
+              if (settingHandleLower.includes(shape)) {
+                this.st.ssh = shape.charAt(0).toUpperCase() + shape.slice(1);
+                console.log('Extracted setting compatible shape from handle:', this.st.ssh);
+                break;
+              }
+            }
+          }
+
           // Load setting variant info
           if (this.st.sv && this.st.ss) {
             this.loadSettingVariantInfo();
@@ -2860,7 +2874,7 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           this.updateShapeFilterStates();
 
           // Apply initial filters/sorting if needed
-          const needsFiltering = Object.keys(this.st.af).length || this.st.gc || this.st.gsh || this.st.sr || this.st.sortBy;
+          const needsFiltering = Object.keys(this.st.af).length || this.st.gc || this.st.gsh || this.st.ssh || this.st.sr || this.st.sortBy;
           if (needsFiltering) {
             setTimeout(() => {
               this.applyFilters();
@@ -3818,6 +3832,16 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
               }
             }
 
+            // Check shape compatibility for diamonds when a setting is selected
+            if (this.st.ssh && product.dataset.productType === 'gemstone') {
+              const diamondShape = (product.dataset.shape || '').toLowerCase();
+              const settingCompatibleShape = this.st.ssh.toLowerCase();
+              if (diamondShape && diamondShape !== settingCompatibleShape) {
+                shouldShow = false;
+                console.log('Diamond hidden - shape mismatch:', diamondShape, 'vs setting compatible:', settingCompatibleShape);
+              }
+            }
+
             // Check carat weight filter for settings
             if (this.st.gc && product.dataset.productType === 'setting') {
               const minCarat = parseFloat(product.dataset.caratMin);
@@ -4383,7 +4407,12 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
                 message = 'Selecting a setting for your <strong>' + this.st.sg.replace(/-/g, ' ') + '</strong>';
               }
             } else if (this.st.ss && !this.st.sg) {
-              message = 'Selecting a diamond for your <strong>' + this.st.ss.replace(/-/g, ' ') + '</strong>';
+              // Building context message for selecting a diamond
+              if (this.st.ssh) {
+                message = 'Showing <strong>' + this.st.ssh + '</strong> diamonds compatible with your setting';
+              } else {
+                message = 'Selecting a diamond for your <strong>' + this.st.ss.replace(/-/g, ' ') + '</strong>';
+              }
             }
 
             if (message) {
