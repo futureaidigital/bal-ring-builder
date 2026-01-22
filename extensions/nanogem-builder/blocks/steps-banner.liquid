@@ -13,10 +13,35 @@
   {% endif %}
 {% endif %}
 {% if request.page_type == 'product' %}
-  {% if product.type == 'Precious stone' and show_on_gemstones %}
+  {% assign product_type_lower = product.type | downcase %}
+  {% assign is_diamond_product = false %}
+  {% assign is_setting_product = false %}
+
+  {% comment %} Check product type for diamonds {% endcomment %}
+  {% if product_type_lower contains 'diamond' or product_type_lower contains 'stone' or product_type_lower == 'precious stone' %}
+    {% assign is_diamond_product = true %}
+  {% endif %}
+
+  {% comment %} Check product type for settings {% endcomment %}
+  {% if product_type_lower == 'ring' or product_type_lower == 'pendant' or product_type_lower contains 'setting' %}
+    {% assign is_setting_product = true %}
+  {% endif %}
+
+  {% comment %} Check tags as fallback {% endcomment %}
+  {% for tag in product.tags %}
+    {% assign tag_lower = tag | downcase %}
+    {% if tag_lower contains 'diamond' or tag_lower == 'gemstone' or tag_lower == 'loose' %}
+      {% assign is_diamond_product = true %}
+    {% endif %}
+    {% if tag_lower contains 'setting' or tag_lower == 'ring' or tag_lower == 'pendant' %}
+      {% assign is_setting_product = true %}
+    {% endif %}
+  {% endfor %}
+
+  {% if is_diamond_product and show_on_gemstones %}
     {% assign should_show = true %}
-  {% elsif product.type == 'Ring' or product.type == 'Pendant' %}
-    {% if show_on_settings %}{% assign should_show = true %}{% endif %}
+  {% elsif is_setting_product and show_on_settings %}
+    {% assign should_show = true %}
   {% elsif product_title_lower contains 'custom' %}
     {% assign should_show = true %}
   {% endif %}
