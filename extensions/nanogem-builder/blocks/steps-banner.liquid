@@ -90,14 +90,14 @@
     <div class="rb-step" data-step="1" id="rb-step-1-{{ block.id }}">
       <div class="rb-step-number">1</div>
       <div class="rb-step-content" id="step-1-product-{{ block.id }}">
-        <div class="rb-step-label"><span class="mobile-hide">{{ block.settings.gemstone_label }}</span><span class="mobile-show">Gemstone</span></div>
+        <div class="rb-step-label"><span class="mobile-hide">{{ block.settings.gemstone_label }}</span><span class="mobile-show">Diamond</span></div>
         <a href="{{ gem_url }}" class="rb-step-browse">{{ block.settings.browse_text }}</a>
       </div>
       <div class="rb-step-icon-wrapper mobile-hide">
         {% if block.settings.gemstone_icon %}
-          <img src="{{ block.settings.gemstone_icon | img_url: 'master' }}" alt="Gemstone" class="rb-step-icon" />
+          <img src="{{ block.settings.gemstone_icon | img_url: 'master' }}" alt="Diamond" class="rb-step-icon" />
         {% else %}
-          <img src="https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/diamond.svg" alt="Gemstone" class="rb-step-icon" />
+          <img src="https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/diamond.svg" alt="Diamond" class="rb-step-icon" />
         {% endif %}
       </div>
     </div>
@@ -187,11 +187,11 @@ const c=document.getElementById('step-'+n+'-product-'+this.bid);
 if(!c)return;
 const ig=t==='gemstone',
 l=ig?'{{ block.settings.gemstone_label }}':'{{ block.settings.setting_label }}',
-ml=ig?'Gemstone':'Setting',
+ml=ig?'Diamond':'Setting',
 bl='{{ block.settings.browse_text }}',
 bu=ig?this.st.gu:this.st.su,
 is=ig?'{% if block.settings.gemstone_icon %}{{ block.settings.gemstone_icon | img_url: "master" }}{% else %}https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/diamond.svg{% endif %}':'{% if block.settings.setting_icon %}{{ block.settings.setting_icon | img_url: "master" }}{% else %}https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/setting.svg{% endif %}',
-ia=ig?'Gemstone':'Setting';
+ia=ig?'Diamond':'Setting';
 let u=bu;const ps=[];
 if(ig&&this.st.s){ps.push('setting='+this.st.s);if(this.st.sv)ps.push('setting_variant='+this.st.sv)}
 else if(!ig&&this.st.g)ps.push('gemstone='+this.st.g);
@@ -211,7 +211,7 @@ if(!c)return;
 let dn='',di=p.featured_image,pr=p.price;
 if(t==='gemstone'){
 const cm=p.title.match(/(\d+\.?\d*)\s*ct/i),ct=cm?cm[1]:'';
-let sh='Gemstone';
+let sh='Diamond';
 if(p.metafields?.custom?.gemstone_shape)sh=p.metafields.custom.gemstone_shape;
 else{const m=p.title.match(/(\w+)\s*-\s*[\d.]+\s*ct/i);if(m)sh=m[1].charAt(0).toUpperCase()+m[1].slice(1)}
 dn=ct+'ct '+sh
@@ -225,7 +225,7 @@ if(fp===mf)fp=cc+' '+pv;
 let vu='/products/'+h,cu=t==='gemstone'?this.st.gu:this.st.su;
 if(t==='gemstone'&&this.st.s){vu+='?setting='+this.st.s;if(this.st.sv)vu+='&setting_variant='+this.st.sv;cu+='?setting='+this.st.s;if(this.st.sv)cu+='&setting_variant='+this.st.sv}
 else if(t==='setting'&&this.st.g){vu+='?gemstone='+this.st.g;if(this.st.sv)vu+='&variant='+this.st.sv;cu+='?gemstone='+this.st.g}
-c.innerHTML=`<div class="rb-step-label"><span class="mobile-hide">${t==='gemstone'?'Gemstone':'Setting'}</span><span class="mobile-show">${t==='gemstone'?'Gemstone':'Setting'}</span></div><div class="rb-step-actions mobile-show"><a href="${vu}">View</a><span>|</span><a href="${cu}">{{ block.settings.change_text }}</a></div><div class="rb-step-product-info mobile-hide"><img src="${di}?width=100&height=100" alt="${p.title}" class="rb-step-product-image"><div class="rb-step-product-details"><div class="rb-step-product-name">${dn}</div><div class="rb-step-product-price">${fp}</div><div class="rb-step-actions"><a href="${vu}">View</a><span>|</span><a href="${cu}">{{ block.settings.change_text }}</a></div></div></div>`;
+c.innerHTML=`<div class="rb-step-label"><span class="mobile-hide">${t==='gemstone'?'Diamond':'Setting'}</span><span class="mobile-show">${t==='gemstone'?'Diamond':'Setting'}</span></div><div class="rb-step-actions mobile-show"><a href="${vu}">View</a><span>|</span><a href="${cu}">{{ block.settings.change_text }}</a></div><div class="rb-step-product-info mobile-hide"><img src="${di}?width=100&height=100" alt="${p.title}" class="rb-step-product-image"><div class="rb-step-product-details"><div class="rb-step-product-name">${dn}</div><div class="rb-step-product-price">${fp}</div><div class="rb-step-actions"><a href="${vu}">View</a><span>|</span><a href="${cu}">{{ block.settings.change_text }}</a></div></div></div>`;
 const se=c.closest('.rb-step');
 if(se){se.classList.add('completed');const iw=se.querySelector('.rb-step-icon-wrapper');if(iw)iw.style.display='none'}
 this.upas()
@@ -250,7 +250,7 @@ else S{{ block.id | remove: '-' }}.init()
     {
       "type": "checkbox",
       "id": "show_on_gemstones",
-      "label": "Show on gemstone products",
+      "label": "Show on diamond products",
       "default": true
     },
     {
@@ -266,8 +266,8 @@ else S{{ block.id | remove: '-' }}.init()
     {
       "type": "text",
       "id": "gem_url",
-      "label": "Gemstones collection URL",
-      "default": "/collections/gemstones"
+      "label": "Diamonds collection URL",
+      "default": "/collections/loose-white-lab-grown-diamonds"
     },
     {
       "type": "text",
@@ -300,8 +300,8 @@ else S{{ block.id | remove: '-' }}.init()
     {
       "type": "text",
       "id": "gemstone_label",
-      "label": "Gemstone step label",
-      "default": "Choose Gemstone"
+      "label": "Diamond step label",
+      "default": "Choose Diamond"
     },
     {
       "type": "text",
@@ -339,7 +339,7 @@ else S{{ block.id | remove: '-' }}.init()
     {
       "type": "image_picker",
       "id": "gemstone_icon",
-      "label": "Gemstone icon"
+      "label": "Diamond icon"
     },
     {
       "type": "image_picker",
