@@ -925,9 +925,9 @@ function generateFilterModal(hasGems, hasSets, gemstone, setting) {
   // 5. GEMSTONE-SPECIFIC FILTERS
   if (hasGems) {
 
-    // Gemstone Type Filter with Icons
+    // Diamond Type Filter with Icons
     html += '<div class="filter-section">';
-    html += '<h3 class="filter-section-title">Gemstone Type</h3>';
+    html += '<h3 class="filter-section-title">Diamond Type</h3>';
     html += '<div class="filter-options filter-gemtype-grid" id="gemstone-type-options">';
     // Will be populated dynamically with icons
     html += '</div>';
@@ -3922,7 +3922,7 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           if (this.st.gc) {
             container.innerHTML += \`
               <div class="af-tag">
-                <span>For \${this.st.gc}ct gemstone</span>
+                <span>For \${this.st.gc}ct diamond</span>
                 <button type="button" data-clear-gc>×</button>
               </div>
             \`;
@@ -4037,7 +4037,7 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             if (this.st.sg && !this.st.ss) {
               message = 'Selecting a setting for your <strong>' + this.st.sg.replace(/-/g, ' ') + '</strong>';
             } else if (this.st.ss && !this.st.sg) {
-              message = 'Selecting a gemstone for your <strong>' + this.st.ss.replace(/-/g, ' ') + '</strong>';
+              message = 'Selecting a diamond for your <strong>' + this.st.ss.replace(/-/g, ' ') + '</strong>';
             }
             
             if (message) {
