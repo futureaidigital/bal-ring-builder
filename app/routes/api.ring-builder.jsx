@@ -769,11 +769,43 @@ function generateProductsHTML(products, urlParams, currencyCode, moneyFormat) {
 }
 
 function getProductShape(product) {
-  // Values should now be properly resolved from metaobject references
+  // Known diamond shapes
+  const KNOWN_SHAPES = ['Round', 'Oval', 'Pear', 'Emerald', 'Cushion', 'Princess', 'Marquise', 'Radiant', 'Asscher', 'Heart'];
+
+  // First try metafield
+  let shape = '';
   if (product.isGem) {
-    return product.metafields.stone_shape || '';
+    shape = product.metafields.stone_shape || '';
+  } else {
+    shape = product.metafields.center_stone_shape || '';
   }
-  return product.metafields.center_stone_shape || '';
+
+  // If metafield is empty, try to extract from product tags
+  if (!shape && product.tags && product.tags.length > 0) {
+    for (const tag of product.tags) {
+      const tagLower = tag.toLowerCase();
+      for (const knownShape of KNOWN_SHAPES) {
+        if (tagLower === knownShape.toLowerCase()) {
+          shape = knownShape;
+          break;
+        }
+      }
+      if (shape) break;
+    }
+  }
+
+  // If still empty, try to extract from product title
+  if (!shape && product.title) {
+    const titleLower = product.title.toLowerCase();
+    for (const knownShape of KNOWN_SHAPES) {
+      if (titleLower.includes(knownShape.toLowerCase())) {
+        shape = knownShape;
+        break;
+      }
+    }
+  }
+
+  return shape;
 }
 
 function generateProductCard(product, urlParams, currencyCode, moneyFormat) {
