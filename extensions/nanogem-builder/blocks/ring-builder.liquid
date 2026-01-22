@@ -130,59 +130,12 @@
             {{ block.settings.add_both_text }}
           </button>
         {%- elsif is_gem -%}
-          <!-- Two buttons for gemstones: Add to Ring / Add to Pendant -->
-          <style>
-            .rb-jewelry-choice .rb-btn {
-              flex: 1;
-              padding: 12px 20px;
-              border: 1px solid #222;
-              background: #fff;
-              color: #222;
-              cursor: pointer;
-              font-weight: 500;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              transition: all 0.2s ease;
-            }
-            .rb-jewelry-choice .rb-btn:hover {
-              background: #A7C9D9;
-              border-color: #A7C9D9;
-              color: #222;
-            }
-            .rb-add-cart-btn {
-              width: 100%;
-              padding: 12px 20px;
-              border: 1px solid #222;
-              background: #222;
-              color: #fff;
-              cursor: pointer;
-              font-weight: 500;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              transition: all 0.2s ease;
-              margin-top: 10px;
-            }
-            .rb-add-cart-btn:hover {
-              background: #000;
-            }
-          </style>
-          <div class="rb-jewelry-choice" style="display:flex;gap:10px;margin-top:10px;">
-            <button type="button"
-                    class="rb-btn"
-                    onclick="handleRingBuilderClick('ring')">
-              {{ block.settings.add_to_ring_text }}
-            </button>
-            <button type="button"
-                    class="rb-btn"
-                    onclick="handleRingBuilderClick('pendant')">
-              {{ block.settings.add_to_pendant_text }}
-            </button>
+          <style>.rb-btn{flex:1;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s}.rb-btn:hover{background:#A7C9D9;border-color:#A7C9D9}.rb-cart{width:100%;padding:12px 20px;border:1px solid #222;background:#222;color:#fff;cursor:pointer;font-weight:500;text-transform:uppercase;margin-top:10px}.rb-cart:hover{background:#000}</style>
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button type="button" class="rb-btn" onclick="handleRingBuilderClick('ring')">{{ block.settings.add_to_ring_text }}</button>
+            <button type="button" class="rb-btn" onclick="handleRingBuilderClick('pendant')">{{ block.settings.add_to_pendant_text }}</button>
           </div>
-          <button type="button"
-                  class="rb-add-cart-btn"
-                  onclick="addGemstoneToCart()">
-            Add to Cart
-          </button>
+          <button type="button" class="rb-cart" onclick="addGemstoneToCart()">Add to Cart</button>
         {%- else -%}
           <button type="button"
                   class="button button--full-width"
@@ -404,58 +357,13 @@
         }
 
         function addGemstoneToCart() {
-          // Get the variant ID from the page
-          const urlParams = new URLSearchParams(window.location.search);
-          let variantId = urlParams.get('variant');
-
-          // If not in URL, try to get from form
-          if (!variantId) {
-            const formInput = document.querySelector('input[name="id"]');
-            const radioInput = document.querySelector('[name="id"]:checked');
-            const selectInput = document.querySelector('select[name="id"]');
-            variantId = formInput?.value || radioInput?.value || selectInput?.value;
-          }
-
-          if (!variantId) {
-            // If still no variant, get first variant from product
-            variantId = '{{ product.selected_or_first_available_variant.id }}';
-          }
-
-          // Add to cart via Shopify AJAX API
-          fetch('/cart/add.js', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              id: variantId,
-              quantity: 1
-            })
-          })
-          .then(response => response.json())
-          .then(data => {
-            // Show success feedback
-            const btn = document.querySelector('.rb-add-cart-btn');
-            if (btn) {
-              const originalText = btn.textContent;
-              btn.textContent = 'Added!';
-              btn.style.background = '#22c55e';
-              btn.style.borderColor = '#22c55e';
-              setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = '#222';
-                btn.style.borderColor = '#222';
-              }, 2000);
-            }
-            // Trigger cart update event for theme
+          let v = new URLSearchParams(location.search).get('variant') || document.querySelector('input[name="id"]')?.value || '{{ product.selected_or_first_available_variant.id }}';
+          fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:v,quantity:1})})
+          .then(r=>r.json()).then(()=>{
+            const b=document.querySelector('.rb-cart');
+            if(b){b.textContent='Added!';b.style.background='#22c55e';setTimeout(()=>{b.textContent='Add to Cart';b.style.background='#222'},2000)}
             document.dispatchEvent(new CustomEvent('cart:refresh'));
-            // Try to update cart drawer/icon if available
-            if (typeof window.refreshCart === 'function') window.refreshCart();
-          })
-          .catch(error => {
-            console.error('Error adding to cart:', error);
-            alert('Error adding to cart. Please try again.');
-          });
+          }).catch(()=>alert('Error adding to cart'));
         }
         </script>
       {%- endif -%}
