@@ -2,9 +2,9 @@ import { authenticate } from "../shopify.server";
 
 // Constants
 const PRODUCTS_PER_PAGE = 24;
-const MAX_PRODUCTS_FETCH = 250;
-const MAX_VARIANTS_FETCH = 100;
-const MAX_IMAGES_FETCH = 15;
+const MAX_PRODUCTS_FETCH = 100;  // Reduced from 250 to stay under Shopify query cost limit
+const MAX_VARIANTS_FETCH = 25;   // Reduced from 100 to stay under query cost limit
+const MAX_IMAGES_FETCH = 5;      // Reduced from 15 to stay under query cost limit
 
 const DEFAULT_SETTINGS = {
   gemUrl: '/collections/gemstones',
