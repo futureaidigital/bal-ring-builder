@@ -154,6 +154,20 @@ async function fetchProductDetails(admin, handle) {
                 key
                 value
                 type
+                reference {
+                  ... on Metaobject {
+                    displayName
+                    handle
+                  }
+                }
+                references(first: 5) {
+                  nodes {
+                    ... on Metaobject {
+                      displayName
+                      handle
+                    }
+                  }
+                }
               }
             }
           }
@@ -171,13 +185,67 @@ async function fetchProductDetails(admin, handle) {
   }
 }
 
+// Helper to extract value from metafield (handles metaobject references)
+function getMetafieldValue(metafield) {
+  if (!metafield) return '';
+
+  // Check single metaobject reference
+  if (metafield.reference) {
+    const ref = metafield.reference;
+    if (ref.displayName) return ref.displayName;
+    if (ref.handle) {
+      return ref.handle.charAt(0).toUpperCase() + ref.handle.slice(1).replace(/-/g, ' ');
+    }
+  }
+
+  // Check list-type metaobject references (plural)
+  if (metafield.references?.nodes?.length > 0) {
+    const ref = metafield.references.nodes[0];
+    if (ref.displayName) return ref.displayName;
+    if (ref.handle) {
+      return ref.handle.charAt(0).toUpperCase() + ref.handle.slice(1).replace(/-/g, ' ');
+    }
+  }
+
+  // Fall back to raw value
+  const value = metafield.value;
+  if (!value) return '';
+
+  let strValue = String(value);
+
+  // Handle JSON array (list-type metafields)
+  if (strValue.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(strValue);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        strValue = String(parsed[0]);
+      }
+    } catch (e) {}
+  }
+
+  // Skip metaobject GIDs that weren't resolved
+  if (strValue.includes('gid://shopify')) {
+    return '';
+  }
+
+  // Handle format like "center_stone_shape.round" -> "Round"
+  if (strValue.includes('.') && !strValue.includes('://') && strValue.includes('_')) {
+    const parts = strValue.split('.');
+    const lastPart = parts.pop();
+    return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
+  }
+
+  return strValue;
+}
+
 function processProductData(product) {
   if (!product) return null;
-  
+
   const metafields = {};
   product.metafields?.edges?.forEach(edge => {
-    const { key, value } = edge.node;
-    metafields[key] = value;
+    const node = edge.node;
+    // Use the helper to extract proper value from metaobject references
+    metafields[node.key] = getMetafieldValue(node);
   });
   
   const variants = product.variants.edges.map(edge => {
