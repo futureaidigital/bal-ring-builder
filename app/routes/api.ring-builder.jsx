@@ -1298,8 +1298,8 @@ function processDiamondCardData(product) {
   const certificationLab = metafields.certification_laboratory || '';
   const certificationNumber = metafields.certification_number || '';
 
-  // Values should now be properly resolved from metaobject references
-  const stoneShape = metafields.stone_shape || '';
+  // Get shape using getProductShape which includes tag/title fallback
+  const stoneShape = getProductShape(product);
   const diamondType = metafields.diamond_type || 'Lab Diamond';
 
   return {
