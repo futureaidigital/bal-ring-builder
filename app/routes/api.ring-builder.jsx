@@ -2788,10 +2788,14 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
           
           // Extract carat weight and shape from gemstone parameter
           if (this.st.sg) {
-            const caratMatch = this.st.sg.match(/(\d+)[-_](\d+)[-_]ct/i);
+            // Handle formats like "8-02ct" or "8-02-ct" or "8_02ct"
+            const caratMatch = this.st.sg.match(/(\d+)[-_](\d+)[-_]?ct/i);
             if (caratMatch) {
-              const caratValue = parseFloat(caratMatch[1] + '.' + caratMatch[2] + (caratMatch[2].length === 1 ? '0' : ''));
-              if (caratValue > 0) this.st.gc = caratValue;
+              const caratValue = parseFloat(caratMatch[1] + '.' + caratMatch[2]);
+              if (caratValue > 0) {
+                this.st.gc = caratValue;
+                console.log('Extracted gemstone carat from handle:', this.st.gc);
+              }
             }
 
             // Extract shape from gemstone handle
