@@ -516,11 +516,11 @@ function generateProductHTML({ product, classification, settings, urlParams, ses
       w.innerHTML = '';
 
       // Button styles
-      const btnStyle = 'flex:1;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s;font-size:13px;';
-      const btnHover = 'background:#A7C9D9;border-color:#A7C9D9';
-      const cartStyle = 'width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;margin-top:10px;transition:all .2s;font-size:13px;';
-      const cartHover = 'background:#000;color:#fff;border-color:#000';
-      const bothStyle = 'width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s;font-size:13px;';
+      const btnStyle = 'flex:1;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s;font-size:13px;border-radius:0!important;';
+      const btnHover = 'background:#A7C9D9;border-color:#A7C9D9;border-radius:0!important;';
+      const cartStyle = 'width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;margin-top:10px;transition:all .2s;font-size:13px;border-radius:0!important;';
+      const cartHover = 'background:#000;color:#fff;border-color:#000;border-radius:0!important;';
+      const bothStyle = 'width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s;font-size:13px;border-radius:0!important;';
 
       // Add to cart helper
       function addToCart(variantId, btn, label) {
