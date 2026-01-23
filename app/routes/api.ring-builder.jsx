@@ -4185,30 +4185,56 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
         updateSettingsForMetal() {
           const selectedMetal = this.st.af.metal?.[0]; // Get first selected metal
           if (!selectedMetal) return;
-          
+
           document.querySelectorAll('.ge-item[data-product-type="setting"]').forEach(product => {
             const card = product.querySelector('.clean-settings-card');
             if (!card) return;
-            
+
             const variantData = JSON.parse(card.dataset.variantColors || '{}');
-            
-            // Find the color that matches the selected metal
+            const allImages = JSON.parse(card.dataset.allImages || '[]');
+
+            // Find the color that matches the selected metal - check bi-color first
             let targetColor = '';
-            if (selectedMetal.includes('White')) targetColor = 'White';
-            else if (selectedMetal.includes('Yellow')) targetColor = 'Yellow';
-            else if (selectedMetal.includes('Rose')) targetColor = 'Rose';
-            
+            const metalLower = selectedMetal.toLowerCase();
+
+            // Check for bi-color metals first
+            if (metalLower.includes('white') && metalLower.includes('yellow')) {
+              targetColor = 'White & Yellow';
+            } else if (metalLower.includes('white') && metalLower.includes('rose')) {
+              targetColor = 'White & Rose';
+            } else if (metalLower.includes('yellow') && metalLower.includes('rose')) {
+              targetColor = 'Yellow & Rose';
+            } else if (metalLower.includes('white')) {
+              targetColor = 'White';
+            } else if (metalLower.includes('yellow')) {
+              targetColor = 'Yellow';
+            } else if (metalLower.includes('rose')) {
+              targetColor = 'Rose';
+            }
+
             if (!targetColor || !variantData[targetColor]) return;
-            
+
             const variant = variantData[targetColor][0];
             if (!variant) return;
-            
+
             // Update the primary image
             const primaryImage = card.querySelector('.clean-settings-card__image--primary');
+            const secondaryImage = card.querySelector('.clean-settings-card__image--secondary');
+
             if (primaryImage && variant.image) {
               primaryImage.src = variant.image + '?width=400';
+
+              // Update secondary image as well
+              if (secondaryImage && allImages.length > 0) {
+                const primaryIndex = allImages.findIndex(img => img === variant.image);
+                if (primaryIndex !== -1 && allImages[primaryIndex + 1]) {
+                  secondaryImage.src = allImages[primaryIndex + 1] + '?width=400';
+                } else {
+                  secondaryImage.src = variant.image + '?width=400';
+                }
+              }
             }
-            
+
             // Update the select button URL
             const selectButton = card.querySelector('.btn-select');
             if (selectButton) {
@@ -4217,7 +4243,7 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
               url.searchParams.set('variant', variant.id);
               selectButton.dataset.productUrl = url.pathname + url.search;
             }
-            
+
             // Update the link URL
             const cardLink = card.querySelector('.clean-settings-card__link');
             if (cardLink) {
@@ -4226,7 +4252,7 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
               url.searchParams.set('variant', variant.id);
               cardLink.dataset.productUrl = url.pathname + url.search;
             }
-            
+
             // Update the active swatch
             card.querySelectorAll('.metal-swatch').forEach(swatch => {
               swatch.classList.toggle('active', swatch.dataset.metalColor === targetColor);
