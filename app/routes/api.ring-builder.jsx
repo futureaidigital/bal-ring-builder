@@ -3084,12 +3084,23 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             'gemstone-type': new Set()
           };
           
+          // Helper to normalize metal type (extract metal name without karat prefix)
+          function normalizeMetal(metal) {
+            if (!metal) return '';
+            // Match metal types with optional karat prefix
+            const match = metal.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Yellow & Rose Gold|Platinum)/i);
+            return match ? match[0] : metal;
+          }
+
           products.forEach(product => {
             if (product.dataset.color) filters.color.add(product.dataset.color);
             if (product.dataset.origin) filters.origin.add(product.dataset.origin);
             if (product.dataset.certification) filters.certification.add(product.dataset.certification);
             if (product.dataset.treatment) filters.treatment.add(product.dataset.treatment);
-            if (product.dataset.metal) filters.metal.add(product.dataset.metal);
+            if (product.dataset.metal) {
+              const normalizedMetal = normalizeMetal(product.dataset.metal);
+              if (normalizedMetal) filters.metal.add(normalizedMetal);
+            }
             if (product.dataset.style) filters.style.add(product.dataset.style);
             if (product.dataset.gemstoneType) filters['gemstone-type'].add(product.dataset.gemstoneType);
           });
@@ -4006,25 +4017,31 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             // Check other filters
             Object.entries(this.st.af).forEach(([filterType, values]) => {
               if (!shouldShow) return;
-              
+
               // Skip carat-range as we handled it above
               if (filterType === 'carat-range') return;
-              
+
               // Skip metal filter for settings - we'll handle it differently
               if (filterType === 'metal' && product.dataset.productType === 'setting') return;
-              
+
               let productValue = product.dataset[filterType.replace('-', '')];
-              
+
               // ADD THIS FIX HERE
               if (filterType === 'gemstone-type') {
                 productValue = product.dataset.gemstoneType; // Use camelCase
+              }
+
+              // Normalize metal type for comparison (strip karat prefix)
+              if (filterType === 'metal' && productValue) {
+                const metalMatch = productValue.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Yellow & Rose Gold|Platinum)/i);
+                if (metalMatch) productValue = metalMatch[0];
               }
 
               if (filterType === 'price') {
                 const price = parseInt(product.dataset.price);
                 productValue = this.getPriceRange(price);
               }
-              
+
               if (!values.includes(productValue)) {
                 shouldShow = false;
               }
