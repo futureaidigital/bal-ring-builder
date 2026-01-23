@@ -606,101 +606,70 @@ function generateProductHTML({ product, classification, settings, urlParams, ses
                (variantInput && variantInput.value) || cv;
       }
 
-      // GEMSTONE PRODUCT
-      if (t == 'gem') {
-        if (ss) {
-          // Has setting param - show only "Add Both to Cart"
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.style.cssText = bothStyle;
-          btn.textContent = 'Add Both to Cart';
-          btn.onmouseover = function() { this.style.cssText = bothStyle + btnHover; };
-          btn.onmouseout = function() { this.style.cssText = bothStyle; };
-          btn.onclick = function() { addBothToCart(h, ss, sv, this); };
-          w.appendChild(btn);
-        } else {
-          // No setting param - show "Add to Ring" + "Add to Pendant" + "Add to Cart"
-          const row = document.createElement('div');
-          row.style.cssText = 'display:flex;gap:10px;margin-top:10px;';
+      // Check if both are selected
+      const both = (t == 'gem' && ss) || (t == 'set' && sg);
 
-          const ringBtn = document.createElement('button');
-          ringBtn.type = 'button';
-          ringBtn.style.cssText = btnStyle;
-          ringBtn.textContent = 'Add to Ring';
-          ringBtn.onmouseover = function() { this.style.cssText = btnStyle + btnHover; };
-          ringBtn.onmouseout = function() { this.style.cssText = btnStyle; };
-          ringBtn.onclick = function() {
-            const v = getCurrentVariant();
-            location.href = '/collections/${settings.settings_collection}?gemstone=' + h + (v ? '&gemstone_variant=' + v : '');
-          };
+      // Create grid container for first row
+      const firstRow = document.createElement('div');
+      firstRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px';
 
-          const pendantBtn = document.createElement('button');
-          pendantBtn.type = 'button';
-          pendantBtn.style.cssText = btnStyle;
-          pendantBtn.textContent = 'Add to Pendant';
-          pendantBtn.onmouseover = function() { this.style.cssText = btnStyle + btnHover; };
-          pendantBtn.onmouseout = function() { this.style.cssText = btnStyle; };
-          pendantBtn.onclick = function() {
-            const v = getCurrentVariant();
-            location.href = '/collections/pendant-settings?gemstone=' + h + (v ? '&gemstone_variant=' + v : '');
-          };
+      // First button - Choose/Complete Ring (black background, white text)
+      const b1 = document.createElement('button');
+      b1.type = 'button';
+      b1.style.cssText = 'background:#000000;color:#ffffff;border:1px solid #000000;border-radius:0;padding:8px 12px;font-size:13px;cursor:pointer;';
+      b1.textContent = both ? 'Complete Your Ring' : (t == 'gem' ? 'Choose this Stone' : 'Choose this Setting');
 
-          row.appendChild(ringBtn);
-          row.appendChild(pendantBtn);
-          w.appendChild(row);
+      b1.onclick = both ? function() {
+        // Go to preview page with both items
+        const currentP = new URLSearchParams(location.search);
+        const currentSg = currentP.get('gemstone');
+        const currentSs = currentP.get('setting');
+        const currentUv = currentP.get('variant');
+        const currentSv = currentP.get('setting_variant');
+        const currentAv = currentUv || cv;
 
-          // Add to Cart button
-          const cartBtn = document.createElement('button');
-          cartBtn.type = 'button';
-          cartBtn.style.cssText = cartStyle;
-          cartBtn.textContent = 'Add to Cart';
-          cartBtn.onmouseover = function() { this.style.cssText = cartStyle + cartHover; };
-          cartBtn.onmouseout = function() { this.style.cssText = cartStyle; };
-          cartBtn.onclick = function() { addToCart(getCurrentVariant(), this, 'Add to Cart'); };
-          w.appendChild(cartBtn);
-        }
-      }
+        location.href = '/products/custom-ring-preview?gemstone=' + (t == 'gem' ? h : currentSg) +
+                        '&setting=' + (t == 'set' ? h : currentSs) +
+                        (t == 'set' && currentAv ? '&setting_variant=' + currentAv :
+                        t == 'gem' && currentSv ? '&setting_variant=' + currentSv :
+                        t == 'gem' && currentUv ? '&setting_variant=' + currentUv : '');
+      } : function() {
+        // Navigate to collection to choose the other item
+        const currentP = new URLSearchParams(location.search);
+        const currentUv = currentP.get('variant');
+        const currentAv = currentUv || cv;
 
-      // SETTING PRODUCT
-      if (t == 'set') {
-        if (sg) {
-          // Has gemstone param - show only "Add Both to Cart"
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.style.cssText = bothStyle;
-          btn.textContent = 'Add Both to Cart';
-          btn.onmouseover = function() { this.style.cssText = bothStyle + btnHover; };
-          btn.onmouseout = function() { this.style.cssText = bothStyle; };
-          btn.onclick = function() {
-            const v = getCurrentVariant();
-            addBothToCart(sg, h, v, this);
-          };
-          w.appendChild(btn);
-        } else {
-          // No gemstone param - show "Choose Your Stone" + "Add to Cart"
-          const chooseBtn = document.createElement('button');
-          chooseBtn.type = 'button';
-          chooseBtn.style.cssText = bothStyle;
-          chooseBtn.textContent = 'Choose Your Stone';
-          chooseBtn.onmouseover = function() { this.style.cssText = bothStyle + btnHover; };
-          chooseBtn.onmouseout = function() { this.style.cssText = bothStyle; };
-          chooseBtn.onclick = function() {
-            const v = getCurrentVariant();
-            location.href = '/collections/${settings.gemstone_collection}?setting=' + h + (v ? '&setting_variant=' + v : '');
-          };
-          w.appendChild(chooseBtn);
+        location.href = '/collections/' + (t == 'gem' ? '${settings.settings_collection}' : '${settings.gemstone_collection}') +
+                        '?' + (t == 'gem' ? 'gemstone' : 'setting') + '=' + h +
+                        (t == 'set' && currentAv ? '&setting_variant=' + currentAv : '');
+      };
 
-          // Add to Cart button
-          const cartBtn = document.createElement('button');
-          cartBtn.type = 'button';
-          cartBtn.style.cssText = cartStyle;
-          cartBtn.textContent = 'Add to Cart';
-          cartBtn.onmouseover = function() { this.style.cssText = cartStyle + cartHover; };
-          cartBtn.onmouseout = function() { this.style.cssText = cartStyle; };
-          cartBtn.onclick = function() { addToCart(getCurrentVariant(), this, 'Add to Cart'); };
-          w.appendChild(cartBtn);
-        }
-      }
+      // Second button - Add to Cart (white background, black text)
+      const b2 = document.createElement('button');
+      b2.type = 'button';
+      b2.style.cssText = 'background:#ffffff;color:#000000;border:1px solid #000000;border-radius:0;padding:8px 12px;font-size:13px;cursor:pointer;';
+      b2.textContent = 'Add to Cart';
+
+      b2.onclick = function() {
+        addToCart(getCurrentVariant(), this, 'Add to Cart');
+      };
+
+      // Add both buttons to first row
+      firstRow.appendChild(b1);
+      firstRow.appendChild(b2);
+      w.appendChild(firstRow);
+
+      // Third button - Request Information (white background, gray border)
+      const b3 = document.createElement('button');
+      b3.type = 'button';
+      b3.style.cssText = 'width:100%;background:#ffffff;color:#000000;border:1px solid #e0e0e0;border-radius:0;padding:8px 12px;font-size:13px;cursor:pointer;';
+      b3.textContent = 'Request Information';
+
+      b3.onclick = function() {
+        // Placeholder for future functionality
+      };
+
+      w.appendChild(b3);
     };
 
     initButton();
