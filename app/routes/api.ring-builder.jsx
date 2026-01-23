@@ -3089,8 +3089,12 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             if (!metal) return '';
             // Match metal types with optional karat prefix
             const match = metal.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Yellow & Rose Gold|Platinum)/i);
+            console.log('METAL DEBUG - Raw:', metal, '| Normalized:', match ? match[0] : metal);
             return match ? match[0] : metal;
           }
+
+          console.log('=== METAL FILTER DEBUG ===');
+          console.log('Total products:', products.length);
 
           products.forEach(product => {
             if (product.dataset.color) filters.color.add(product.dataset.color);
@@ -3098,12 +3102,16 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             if (product.dataset.certification) filters.certification.add(product.dataset.certification);
             if (product.dataset.treatment) filters.treatment.add(product.dataset.treatment);
             if (product.dataset.metal) {
+              console.log('Product metal attr:', product.dataset.metal, '| Product:', product.dataset.productId);
               const normalizedMetal = normalizeMetal(product.dataset.metal);
               if (normalizedMetal) filters.metal.add(normalizedMetal);
             }
             if (product.dataset.style) filters.style.add(product.dataset.style);
             if (product.dataset.gemstoneType) filters['gemstone-type'].add(product.dataset.gemstoneType);
           });
+
+          console.log('Collected metal types:', Array.from(filters.metal));
+          console.log('=== END METAL DEBUG ===');
           
           // Render filter options
           // In populateFilterOptions(), add special handling for metal:
