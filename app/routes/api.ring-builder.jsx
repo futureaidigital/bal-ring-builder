@@ -1411,14 +1411,17 @@ function generateMetalSwatches(metalColors, productId) {
   const imageMap = {
     'White': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-gold.png',
     'Yellow': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/yellow-gold.png',
-    'Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18-rose-gold-icon.png'
+    'Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18-rose-gold-icon.png',
+    'White & Yellow': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-yellow-gold.png',
+    'White & Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-rose-gold.png',
+    'Yellow & Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/yellow-rose-gold.png'
   };
-  
+
   return `
     <div class="metal-swatches" data-product-id="${productId}">
       ${metalColors.map((color, index) => `
-        <div class="metal-swatch ${index === 0 ? 'active' : ''}" 
-             data-metal-color="${color}" 
+        <div class="metal-swatch ${index === 0 ? 'active' : ''}"
+             data-metal-color="${color}"
              title="${color} Gold">
           <img src="${imageMap[color]}" alt="${color} Gold" class="metal-swatch__image">
         </div>
@@ -1496,18 +1499,26 @@ function extractMetalKarat(variants) {
 }
 function extractMetalColors(variants) {
   const metalColors = new Set();
-  
+
   variants.forEach(v => {
     const metal = v.options.option1;
     if (metal) {
-      // Extract color from strings like "14k White Gold", "18k Rose Gold"
-      const colorMatch = metal.match(/(White|Yellow|Rose)/i);
-      if (colorMatch) {
-        metalColors.add(colorMatch[1].charAt(0).toUpperCase() + colorMatch[1].slice(1).toLowerCase());
+      // Check for bi-color metals first (e.g., "18k White & Rose Gold")
+      const biColorMatch = metal.match(/(White|Yellow|Rose)\s*&\s*(White|Yellow|Rose)/i);
+      if (biColorMatch) {
+        const color1 = biColorMatch[1].charAt(0).toUpperCase() + biColorMatch[1].slice(1).toLowerCase();
+        const color2 = biColorMatch[2].charAt(0).toUpperCase() + biColorMatch[2].slice(1).toLowerCase();
+        metalColors.add(`${color1} & ${color2}`);
+      } else {
+        // Extract single color from strings like "14k White Gold", "18k Rose Gold"
+        const colorMatch = metal.match(/(White|Yellow|Rose)/i);
+        if (colorMatch) {
+          metalColors.add(colorMatch[1].charAt(0).toUpperCase() + colorMatch[1].slice(1).toLowerCase());
+        }
       }
     }
   });
-  
+
   return Array.from(metalColors);
 }
 function extractSizeRange(variants) {
