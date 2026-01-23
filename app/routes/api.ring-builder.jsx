@@ -2096,6 +2096,7 @@ function getRingBuilderCSS() {
     .clean-settings-card__image-container{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#ffffff;overflow:hidden;position:relative}
     .clean-settings-card__image{width:100%;height:100%;object-fit:cover;max-width:100%;height:auto}
     .clean-settings-card__content{padding:0px;flex:1;display:flex;flex-direction:column;gap:4px;text-align:center;width:100%;overflow:hidden}
+    .clean-settings-card__title{font-family:Lato,sans-serif;font-size:0.875rem;font-weight:400;color:#000000;margin:0;line-height:1.65;text-transform:uppercase;letter-spacing:0.04em}
     .clean-settings-card__price{display:flex;align-items:baseline;gap:0px;margin-top:0;padding-top:0px;justify-content:center}
     .clean-settings-card__actions{display:none!important}
     .clean-settings-card__image--secondary{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity 0.3s ease}
@@ -2118,22 +2119,22 @@ function getRingBuilderCSS() {
     .clean-gemstone-card__image{width:100%;height:100%;object-fit:cover;max-width:100%;height:auto}
     .clean-gemstone-card__placeholder{font-size:12px;color:#000000;letter-spacing:0.5px;opacity:0.3}
     .clean-gemstone-card__content{padding:4px;flex:1;display:flex;flex-direction:column;gap:8px;width:100%;overflow:hidden}
-    .clean-gemstone-card__title{font-size:18px;font-weight:700;color:#000000;margin:0;line-height:1.3}
+    .clean-gemstone-card__title{font-family:Lato,sans-serif;font-size:0.875rem;font-weight:400;color:#000000;margin:0;line-height:1.65;text-transform:uppercase;letter-spacing:0.04em}
     .clean-gemstone-card__specs{display:flex;flex-direction:column;gap:0;margin:0 -20px;padding:0 20px}
     .clean-gemstone-card__price{display:flex;align-items:baseline;gap:8px;margin-top:4px;padding-top:0}
     .clean-gemstone-card__actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:100%}
     .clean-gemstone-card__actions .btn-select{display:none!important}
     
     /* Spec Rows */
-    .spec-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:10px 20px;margin:0 -20px}
+    .spec-row{display:flex;justify-content:space-between;align-items:center;font-family:Nunito,sans-serif;font-size:0.8125rem;padding:10px 20px;margin:0 -20px;letter-spacing:0.02em}
     .spec-row:nth-child(odd){background:#f5f5f5}
     .spec-row:nth-child(even){background:#ffffff}
     .spec-label{color:#000000;flex:0 0 100px;font-weight:600}
     .spec-value{color:#000000;text-align:right;flex:1}
     
     /* Price Styles */
-    .price-current{font-size:16px;font-weight:700;color:#000000}
-    .price-compare{font-size:13px;color:#000000;text-decoration:line-through;opacity:0.5}
+    .price-current{font-family:Nunito,sans-serif;font-size:0.875rem;font-weight:400;color:#000000;letter-spacing:0.02em}
+    .price-compare{font-family:Nunito,sans-serif;font-size:0.8125rem;color:#000000;text-decoration:line-through;opacity:0.5;letter-spacing:0.02em}
     
     /* Buttons */
     .btn-view,.btn-select{padding:10px 16px;font-size:13px;font-weight:400;cursor:pointer;transition:all 0.15s;border:1px solid #e0e0e0;background:#ffffff;color:#000000;text-align:center}
@@ -2400,14 +2401,20 @@ function getRingBuilderCSS() {
   }
   
   .clean-settings-card__title {
-    font-size: 12px !important;
-    line-height: 1.3 !important;
+    font-family: Lato, sans-serif !important;
+    font-size: 0.75rem !important;
+    font-weight: 400 !important;
+    line-height: 1.65 !important;
     margin: 0 0 4px 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
   }
   
   .clean-settings-card__price {
-    font-size: 13px !important;
+    font-family: Nunito, sans-serif !important;
+    font-size: 0.8125rem !important;
     margin-top: 0px !important;
+    letter-spacing: 0.02em !important;
   }
   
   /* Gemstone card content */
@@ -2420,11 +2427,14 @@ function getRingBuilderCSS() {
   }
   
   .clean-gemstone-card__title {
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    line-height: 1.3 !important;
+    font-family: Lato, sans-serif !important;
+    font-size: 0.75rem !important;
+    font-weight: 400 !important;
+    line-height: 1.65 !important;
     padding: 0 12px;
     margin: 0 0 8px 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
   }
   
   .clean-gemstone-card__cert-badge {
