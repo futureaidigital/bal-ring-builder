@@ -1434,12 +1434,12 @@ function generateDefaultCard(product, currencyCode = 'AED', moneyFormat = '{{amo
 // Card Helper Functions
 function generateMetalSwatches(metalColors, productId) {
   const imageMap = {
-    'White': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-gold.png',
-    'Yellow': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/yellow-gold.png',
-    'Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18-rose-gold-icon.png',
-    'White & Yellow': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-yellow-gold.png',
-    'White & Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-rose-gold.png',
-    'Yellow & Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/yellow-rose-gold.png'
+    'White': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-white-gold-icon.png',
+    'Yellow': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-yellow-gold-icon.png',
+    'Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-rose-gold-icon.png',
+    'White & Yellow': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-white-yellow-gold-icon.png',
+    'White & Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-white-rose-gold-icon.png',
+    'Yellow & Rose': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-yellow-rose-gold-icon.png'
   };
 
   return `
