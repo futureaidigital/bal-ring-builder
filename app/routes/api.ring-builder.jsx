@@ -4989,6 +4989,22 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
       // Initialize the Ring Builder Application
       document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => window.RBA.init(), 300);
+
+        // DEBUG: Log first product's images and variant data
+        setTimeout(() => {
+          const firstCard = document.querySelector('.clean-settings-card');
+          if (firstCard) {
+            const title = firstCard.querySelector('.clean-settings-card__title')?.textContent;
+            const variantColors = JSON.parse(firstCard.dataset.variantColors || '{}');
+            const allImages = JSON.parse(firstCard.dataset.allImages || '[]');
+            console.log('=== DEBUG: First Product Image Mapping ===');
+            console.log('Product:', title);
+            console.log('All Images:', allImages);
+            console.log('Variant Colors:', variantColors);
+            console.log('Metal swatches shown:', Array.from(firstCard.querySelectorAll('.metal-swatch')).map(s => s.dataset.metalColor));
+            console.log('==========================================');
+          }
+        }, 500);
       });
     })();
   `;
