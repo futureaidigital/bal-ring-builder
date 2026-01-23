@@ -163,12 +163,23 @@
 (function(){'use strict';
 const S{{ block.id | remove: '-' }}={
 bid:'{{ block.id }}',
-st:{g:null,s:null,sv:null,cs:1,gu:'{{ gem_url }}',su:'{{ set_url }}'},
+st:{g:null,s:null,sv:null,cs:1,gu:'{{ gem_url }}',su:'{{ set_url }}',sf:false},
 init(){
-this.purl();this.upds();this.upas();
+this.purl();this.dsf();this.upds();this.upas();
 {% if request.page_type == 'product' %}this.ccp();this.upds();this.upas();{% endif %}
 },
 purl(){const u=new URLSearchParams(window.location.search);this.st.g=u.get('gemstone');this.st.s=u.get('setting');this.st.sv=u.get('setting_variant')},
+dsf(){
+const p=window.location.pathname;
+const sc=p.includes('/collections/setting')||p.includes('/collections/rings')||p.includes('/collections/pendants')||p.includes('/collections/mountings')||p.includes('/collections/ring-settings');
+const gc=p.includes('/collections/gemstone')||p.includes('/collections/stones')||p.includes('/collections/sapphires')||p.includes('/collections/rubies')||p.includes('/collections/emeralds')||p.includes('/collections/diamonds');
+if(sc&&!this.st.g)this.st.sf=true;
+else if(gc&&this.st.s)this.st.sf=true;
+{% if request.page_type == 'product' %}
+{% if product.type == 'Ring' or product.type == 'Pendant' %}if(!this.st.g)this.st.sf=true;{% endif %}
+{% if product.type == 'Precious stone' %}if(this.st.s)this.st.sf=true;{% endif %}
+{% endif %}
+},
 ccp(){
 {% if product %}
 const t='{{ product.type }}',h='{{ product.handle }}';
@@ -177,8 +188,13 @@ else if(t==='Ring'||t==='Pendant'){this.st.s=h;const v=new URLSearchParams(windo
 {% endif %}
 },
 upds(){
+if(this.st.sf){
+this.st.s?this.lsp(this.st.s,1,'setting'):this.ses(1,'setting');
+this.st.g?this.lsp(this.st.g,2,'gemstone'):this.ses(2,'gemstone');
+}else{
 this.st.g?this.lsp(this.st.g,1,'gemstone'):this.ses(1,'gemstone');
 this.st.s?this.lsp(this.st.s,2,'setting'):this.ses(2,'setting');
+}
 this.upcs()
 },
 upcs(){
@@ -195,17 +211,25 @@ const ss=document.querySelectorAll('#rb-steps-banner-'+this.bid+' .rb-step');
 ss.forEach(s=>s.classList.remove('active'));
 const p=window.location.pathname,
 gc=p.includes('/collections/gemstone')||p.includes('/collections/stones')||p.includes('/collections/sapphires')||p.includes('/collections/rubies')||p.includes('/collections/emeralds')||p.includes('/collections/diamonds'),
-sc=p.includes('/collections/setting')||p.includes('/collections/rings')||p.includes('/collections/pendants')||p.includes('/collections/mountings'),
+sc=p.includes('/collections/setting')||p.includes('/collections/rings')||p.includes('/collections/pendants')||p.includes('/collections/mountings')||p.includes('/collections/ring-settings'),
 pp=p.includes('/products/');
 if(pp){
 if(p.includes('custom-ring-preview')){document.getElementById('rb-step-3-'+this.bid).classList.add('active');return}
 {% if product %}
 const t='{{ product.type }}';
-document.getElementById('rb-step-'+(t==='Precious stone'?'1':t==='Ring'||t==='Pendant'?'2':'1')+'-'+this.bid).classList.add('active')
+const isGem=t==='Precious stone';
+const isSet=t==='Ring'||t==='Pendant';
+let as=1;
+if(this.st.sf){as=isSet?1:isGem?2:1}else{as=isGem?1:isSet?2:1}
+document.getElementById('rb-step-'+as+'-'+this.bid).classList.add('active')
 {% else %}
 document.getElementById('rb-step-1-'+this.bid).classList.add('active')
 {% endif %}
-}else document.getElementById('rb-step-'+(gc?'1':sc?'2':'1')+'-'+this.bid).classList.add('active')
+}else{
+let as=1;
+if(this.st.sf){as=sc?1:gc?2:1}else{as=gc?1:sc?2:1}
+document.getElementById('rb-step-'+as+'-'+this.bid).classList.add('active')
+}
 },
 ses(n,t){
 const c=document.getElementById('step-'+n+'-product-'+this.bid);
