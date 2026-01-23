@@ -3084,13 +3084,25 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             'gemstone-type': new Set()
           };
           
-          // Helper to normalize metal type (extract metal name without karat prefix)
-          function normalizeMetal(metal) {
-            if (!metal) return '';
-            // Match metal types with optional karat prefix
-            const match = metal.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Yellow & Rose Gold|Platinum)/i);
-            console.log('METAL DEBUG - Raw:', metal, '| Normalized:', match ? match[0] : metal);
-            return match ? match[0] : metal;
+          // Helper to extract all metal types from a comma-separated list
+          function extractMetalTypes(metalStr) {
+            if (!metalStr) return [];
+            const knownMetals = ['White & Yellow Gold', 'White & Rose Gold', 'Yellow & Rose Gold', 'White Gold', 'Yellow Gold', 'Rose Gold', 'Platinum'];
+            const metals = [];
+
+            // Split by comma and check each part
+            metalStr.split(',').forEach(part => {
+              const trimmed = part.trim();
+              // Check if it matches a known metal (with or without karat prefix)
+              for (const known of knownMetals) {
+                if (trimmed.toLowerCase().includes(known.toLowerCase())) {
+                  if (!metals.includes(known)) metals.push(known);
+                  break;
+                }
+              }
+            });
+
+            return metals;
           }
 
           console.log('=== METAL FILTER DEBUG ===');
@@ -3103,8 +3115,9 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
             if (product.dataset.treatment) filters.treatment.add(product.dataset.treatment);
             if (product.dataset.metal) {
               console.log('Product metal attr:', product.dataset.metal, '| Product:', product.dataset.productId);
-              const normalizedMetal = normalizeMetal(product.dataset.metal);
-              if (normalizedMetal) filters.metal.add(normalizedMetal);
+              const metalTypes = extractMetalTypes(product.dataset.metal);
+              console.log('Extracted metals:', metalTypes);
+              metalTypes.forEach(m => filters.metal.add(m));
             }
             if (product.dataset.style) filters.style.add(product.dataset.style);
             if (product.dataset.gemstoneType) filters['gemstone-type'].add(product.dataset.gemstoneType);
@@ -4039,10 +4052,25 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
                 productValue = product.dataset.gemstoneType; // Use camelCase
               }
 
-              // Normalize metal type for comparison (strip karat prefix)
+              // Special handling for metal filter - check if any selected metal is in product's metal list
               if (filterType === 'metal' && productValue) {
-                const metalMatch = productValue.match(/(White Gold|Yellow Gold|Rose Gold|White & Yellow Gold|White & Rose Gold|Yellow & Rose Gold|Platinum)/i);
-                if (metalMatch) productValue = metalMatch[0];
+                const knownMetals = ['White & Yellow Gold', 'White & Rose Gold', 'Yellow & Rose Gold', 'White Gold', 'Yellow Gold', 'Rose Gold', 'Platinum'];
+                const productMetals = [];
+                productValue.split(',').forEach(part => {
+                  const trimmed = part.trim();
+                  for (const known of knownMetals) {
+                    if (trimmed.toLowerCase().includes(known.toLowerCase())) {
+                      productMetals.push(known);
+                      break;
+                    }
+                  }
+                });
+                // Check if any selected filter value matches any product metal
+                const hasMatch = values.some(v => productMetals.includes(v));
+                if (!hasMatch) {
+                  shouldShow = false;
+                }
+                return; // Skip the default check below
               }
 
               if (filterType === 'price') {
