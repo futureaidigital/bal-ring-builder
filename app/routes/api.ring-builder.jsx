@@ -2096,7 +2096,7 @@ function getRingBuilderCSS() {
     .clean-settings-card__image-container{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#ffffff;overflow:hidden;position:relative}
     .clean-settings-card__image{width:100%;height:100%;object-fit:cover;max-width:100%;height:auto}
     .clean-settings-card__content{padding:0px;flex:1;display:flex;flex-direction:column;gap:4px;text-align:center;width:100%;overflow:hidden}
-    .clean-settings-card__title{font-family:Lato,sans-serif;font-size:0.875rem;font-weight:400;color:#000000;margin:0;line-height:1.65;text-transform:uppercase;letter-spacing:0.04em}
+    .clean-settings-card__title{font-family:Lato,sans-serif;font-size:0.75rem;font-weight:400;color:#000000;margin:0;line-height:1.65;text-transform:uppercase;letter-spacing:0.04em}
     .clean-settings-card__price{display:flex;align-items:baseline;gap:0px;margin-top:0;padding-top:0px;justify-content:center}
     .clean-settings-card__actions{display:none!important}
     .clean-settings-card__image--secondary{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity 0.3s ease}
@@ -2402,7 +2402,7 @@ function getRingBuilderCSS() {
   
   .clean-settings-card__title {
     font-family: Lato, sans-serif !important;
-    font-size: 0.75rem !important;
+    font-size: 0.6875rem !important;
     font-weight: 400 !important;
     line-height: 1.65 !important;
     margin: 0 0 4px 0 !important;
