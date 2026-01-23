@@ -4,7 +4,7 @@ import { authenticate } from "../shopify.server";
 const PRODUCTS_PER_PAGE = 24;
 const MAX_PRODUCTS_FETCH = 100;  // Reduced from 250 to stay under Shopify query cost limit
 const MAX_VARIANTS_FETCH = 25;   // Reduced from 100 to stay under query cost limit
-const MAX_IMAGES_FETCH = 5;      // Reduced from 15 to stay under query cost limit
+const MAX_IMAGES_FETCH = 25;     // Increased to fetch all variant images for metal swatches
 
 const DEFAULT_SETTINGS = {
   gemUrl: '/collections/loose-white-lab-grown-diamonds',
