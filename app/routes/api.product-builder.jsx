@@ -498,153 +498,212 @@ function generateProductHTML({ product, classification, settings, urlParams, ses
   html += `
   <script>
   (function() {
-    // Function to initialize the button
     const initButton = function() {
       const w = document.querySelector('.rb-btn-wrap');
       if (!w) return;
-      
-      const t = w.dataset.type;
+
+      const t = w.dataset.type; // 'gem' or 'set'
       const h = w.dataset.handle;
       const gc = w.dataset.gcol;
       const sc = w.dataset.scol;
       const cv = w.dataset.currentVariant;
-      
-      // Read initial params for display purposes only
+
       const p = new URLSearchParams(location.search);
       const sg = p.get('gemstone');
       const ss = p.get('setting');
-      const both = (t == 'gem' && ss) || (t == 'set' && sg);
-      
-    // Create button container
-    // Create button container
-    w.innerHTML = '';
+      const sv = p.get('setting_variant');
 
-    // Create grid container for first row
-    const firstRow = document.createElement('div');
-    firstRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px';
+      w.innerHTML = '';
 
-    // First button - Choose/Add Both (black background, white text)
-    const b1 = document.createElement('button');
-    b1.type = 'button';
-    b1.className = 'button';
-    b1.style.cssText = 'background:#000000;color:#ffffff;border:1px solid #000000;border-radius:0;padding:8px 12px;font-size:13px;';
-    b1.innerHTML = both ? '${settings.add_both_text}' : 
-                  (t == 'gem' ? 'Choose this Stone' : 'Choose this Setting');
+      // Button styles
+      const btnStyle = 'flex:1;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s;font-size:13px;';
+      const btnHover = 'background:#A7C9D9;border-color:#A7C9D9';
+      const cartStyle = 'width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;margin-top:10px;transition:all .2s;font-size:13px;';
+      const cartHover = 'background:#000;color:#fff;border-color:#000';
+      const bothStyle = 'width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s;font-size:13px;';
 
-    b1.onclick = both ? function() {
-      // Existing add both functionality
-      const currentP = new URLSearchParams(location.search);
-      const currentSg = currentP.get('gemstone');
-      const currentSs = currentP.get('setting');
-      const currentUv = currentP.get('variant');
-      const currentSv = currentP.get('setting_variant');
-      const currentAv = currentUv || cv;
-      
-      location.href = '/products/custom-ring-preview?gemstone=' + (t == 'gem' ? h : currentSg) + 
-                      '&setting=' + (t == 'set' ? h : currentSs) + 
-                      (t == 'set' && currentAv ? '&setting_variant=' + currentAv : 
-                      t == 'gem' && currentSv ? '&setting_variant=' + currentSv : 
-                      t == 'gem' && currentUv ? '&setting_variant=' + currentUv : '');
-    } : function() {
-      // Existing choose functionality
-      const currentP = new URLSearchParams(location.search);
-      const currentUv = currentP.get('variant');
-      const currentAv = currentUv || cv;
-      
-      location.href = '${session.shop.primaryDomain ? 'https://' + session.shop.primaryDomain : ''}/collections/' + 
-                      (t == 'gem' ? sc : gc) + '?' + (t == 'gem' ? 'gemstone' : 'setting') + '=' + h + 
-                      (t == 'set' && currentAv ? '&setting_variant=' + currentAv : '');
-    };
-
-    // Second button - Add to Cart (white background, black text)
-    const b2 = document.createElement('button');
-    b2.type = 'button';
-    b2.className = 'button';
-    b2.style.cssText = 'background:#ffffff;color:#000000;border:1px solid #000000;border-radius:0;padding:8px 12px;font-size:13px;';
-    b2.innerHTML = 'Add to Cart';
-
-    b2.onclick = function() {
-      // Get current variant from various possible selectors
-      const variantRadio = document.querySelector('variant-radios input[type="radio"]:checked');
-      const variantSelect = document.querySelector('variant-selects select');
-      const variantInput = document.querySelector('[name="id"]');
-      const currentV = (variantRadio && variantRadio.value) || 
-                      (variantSelect && variantSelect.value) || 
-                      (variantInput && variantInput.value) || 
-                      cv;
-      
-      fetch('/cart/add.js', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: currentV,
-          quantity: 1
+      // Add to cart helper
+      function addToCart(variantId, btn, label) {
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({id: variantId, quantity: 1})
         })
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to add to cart');
-        return response.json();
-      })
-      .then(data => {
-        // Update cart count
-        const cartBubbles = document.querySelectorAll('.cart-count-bubble span, .cart-count');
-        cartBubbles.forEach(bubble => {
-          const currentCount = parseInt(bubble.textContent) || 0;
-          bubble.textContent = currentCount + 1;
+        .then(r => r.json())
+        .then(() => {
+          btn.textContent = 'Added!';
+          btn.style.background = '#22c55e';
+          btn.style.borderColor = '#22c55e';
+          btn.style.color = '#fff';
+          document.dispatchEvent(new CustomEvent('cart:refresh'));
+          setTimeout(() => {
+            btn.textContent = label;
+            btn.style.background = '#fff';
+            btn.style.borderColor = '#222';
+            btn.style.color = '#222';
+            btn.disabled = false;
+          }, 2000);
+        })
+        .catch(() => {
+          alert('Error adding to cart');
+          btn.textContent = label;
+          btn.disabled = false;
         });
-        
-        // Show notification
-        const msg = document.createElement('div');
-        msg.style.cssText = 'position:fixed;top:20px;right:20px;background:#000;color:#fff;padding:12px 20px;border-radius:4px;z-index:9999;font-size:14px;';
-        msg.textContent = 'Added to cart!';
-        document.body.appendChild(msg);
-        
-        // Try to open cart drawer
-        if (window.Shopify && window.Shopify.theme && typeof window.Shopify.theme.openCartDrawer === 'function') {
-          window.Shopify.theme.openCartDrawer();
+      }
+
+      // Add both to cart helper
+      function addBothToCart(gemHandle, setHandle, setVariant, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        Promise.all([
+          fetch('/apps/nanogem-builder/product-details?handle=' + gemHandle).then(r => r.json()),
+          fetch('/apps/nanogem-builder/product-details?handle=' + setHandle).then(r => r.json())
+        ])
+        .then(([gem, set]) => {
+          const gemVariantId = gem.variants[0].id;
+          let setVariantId = set.variants[0].id;
+          if (setVariant) {
+            const match = set.variants.find(v => v.id == setVariant);
+            if (match) setVariantId = match.id;
+          }
+
+          return fetch('/cart/add.js', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              items: [
+                {id: parseInt(gemVariantId), quantity: 1},
+                {id: parseInt(setVariantId), quantity: 1}
+              ]
+            })
+          });
+        })
+        .then(r => r.json())
+        .then(() => {
+          btn.textContent = 'Added! Redirecting...';
+          btn.style.background = '#22c55e';
+          btn.style.borderColor = '#22c55e';
+          btn.style.color = '#fff';
+          setTimeout(() => location.href = '/cart', 500);
+        })
+        .catch(() => {
+          alert('Error adding to cart');
+          btn.textContent = 'Add Both to Cart';
+          btn.disabled = false;
+        });
+      }
+
+      // Get current variant
+      function getCurrentVariant() {
+        const variantRadio = document.querySelector('variant-radios input[type="radio"]:checked');
+        const variantSelect = document.querySelector('variant-selects select');
+        const variantInput = document.querySelector('[name="id"]');
+        return (variantRadio && variantRadio.value) ||
+               (variantSelect && variantSelect.value) ||
+               (variantInput && variantInput.value) || cv;
+      }
+
+      // GEMSTONE PRODUCT
+      if (t == 'gem') {
+        if (ss) {
+          // Has setting param - show only "Add Both to Cart"
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.cssText = bothStyle;
+          btn.textContent = 'Add Both to Cart';
+          btn.onmouseover = function() { this.style.cssText = bothStyle + btnHover; };
+          btn.onmouseout = function() { this.style.cssText = bothStyle; };
+          btn.onclick = function() { addBothToCart(h, ss, sv, this); };
+          w.appendChild(btn);
+        } else {
+          // No setting param - show "Add to Ring" + "Add to Pendant" + "Add to Cart"
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;gap:10px;margin-top:10px;';
+
+          const ringBtn = document.createElement('button');
+          ringBtn.type = 'button';
+          ringBtn.style.cssText = btnStyle;
+          ringBtn.textContent = 'Add to Ring';
+          ringBtn.onmouseover = function() { this.style.cssText = btnStyle + btnHover; };
+          ringBtn.onmouseout = function() { this.style.cssText = btnStyle; };
+          ringBtn.onclick = function() {
+            const v = getCurrentVariant();
+            location.href = '/collections/${settings.settings_collection}?gemstone=' + h + (v ? '&gemstone_variant=' + v : '');
+          };
+
+          const pendantBtn = document.createElement('button');
+          pendantBtn.type = 'button';
+          pendantBtn.style.cssText = btnStyle;
+          pendantBtn.textContent = 'Add to Pendant';
+          pendantBtn.onmouseover = function() { this.style.cssText = btnStyle + btnHover; };
+          pendantBtn.onmouseout = function() { this.style.cssText = btnStyle; };
+          pendantBtn.onclick = function() {
+            const v = getCurrentVariant();
+            location.href = '/collections/pendant-settings?gemstone=' + h + (v ? '&gemstone_variant=' + v : '');
+          };
+
+          row.appendChild(ringBtn);
+          row.appendChild(pendantBtn);
+          w.appendChild(row);
+
+          // Add to Cart button
+          const cartBtn = document.createElement('button');
+          cartBtn.type = 'button';
+          cartBtn.style.cssText = cartStyle;
+          cartBtn.textContent = 'Add to Cart';
+          cartBtn.onmouseover = function() { this.style.cssText = cartStyle + cartHover; };
+          cartBtn.onmouseout = function() { this.style.cssText = cartStyle; };
+          cartBtn.onclick = function() { addToCart(getCurrentVariant(), this, 'Add to Cart'); };
+          w.appendChild(cartBtn);
         }
-        
-        setTimeout(() => msg.remove(), 3000);
-      })
-      .catch(err => {
-        console.error('Error adding to cart:', err);
-        alert('Failed to add to cart. Please try again.');
-      });
-    };
+      }
 
-    // Add both buttons to first row
-    firstRow.appendChild(b1);
-    firstRow.appendChild(b2);
-    w.appendChild(firstRow);
+      // SETTING PRODUCT
+      if (t == 'set') {
+        if (sg) {
+          // Has gemstone param - show only "Add Both to Cart"
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.cssText = bothStyle;
+          btn.textContent = 'Add Both to Cart';
+          btn.onmouseover = function() { this.style.cssText = bothStyle + btnHover; };
+          btn.onmouseout = function() { this.style.cssText = bothStyle; };
+          btn.onclick = function() {
+            const v = getCurrentVariant();
+            addBothToCart(sg, h, v, this);
+          };
+          w.appendChild(btn);
+        } else {
+          // No gemstone param - show "Choose Your Stone" + "Add to Cart"
+          const chooseBtn = document.createElement('button');
+          chooseBtn.type = 'button';
+          chooseBtn.style.cssText = bothStyle;
+          chooseBtn.textContent = 'Choose Your Stone';
+          chooseBtn.onmouseover = function() { this.style.cssText = bothStyle + btnHover; };
+          chooseBtn.onmouseout = function() { this.style.cssText = bothStyle; };
+          chooseBtn.onclick = function() {
+            const v = getCurrentVariant();
+            location.href = '/collections/${settings.gemstone_collection}?setting=' + h + (v ? '&setting_variant=' + v : '');
+          };
+          w.appendChild(chooseBtn);
 
-    // Third button - Request Information (white background, black text)
-    const b3 = document.createElement('button');
-    b3.type = 'button';
-    b3.className = 'button button--full-width';
-    b3.style.cssText = 'background:#ffffff;color:#000000;border:1px solid #e0e0e0;border-radius:0;padding:8px 12px;font-size:13px;margin-top:0;';
-    b3.innerHTML = 'Request Information';
-
-    b3.onclick = function() {
-      // Does nothing for now
-      console.log('Request information clicked');
-    };
-
-    w.appendChild(b3);
-              
-      if (both) {
-        const pi = document.createElement('div');
-        pi.className = 'rb-price';
-        pi.textContent = 'Both items will be added to your cart';
-        w.appendChild(pi);
+          // Add to Cart button
+          const cartBtn = document.createElement('button');
+          cartBtn.type = 'button';
+          cartBtn.style.cssText = cartStyle;
+          cartBtn.textContent = 'Add to Cart';
+          cartBtn.onmouseover = function() { this.style.cssText = cartStyle + cartHover; };
+          cartBtn.onmouseout = function() { this.style.cssText = cartStyle; };
+          cartBtn.onclick = function() { addToCart(getCurrentVariant(), this, 'Add to Cart'); };
+          w.appendChild(cartBtn);
+        }
       }
     };
-    
-    // Run immediately
+
     initButton();
-    
-    // Also try on DOMContentLoaded in case we're early
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initButton);
     }

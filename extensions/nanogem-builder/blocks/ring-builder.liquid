@@ -130,7 +130,7 @@
             {{ block.settings.add_both_text }}
           </button>
         {%- elsif is_gem -%}
-          <style>.rb-btn{flex:1;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s}.rb-btn:hover{background:#A7C9D9;border-color:#A7C9D9}.rb-cart{width:100%;padding:12px 20px;border:1px solid #222;background:#222;color:#fff;cursor:pointer;font-weight:500;text-transform:uppercase;margin-top:10px}.rb-cart:hover{background:#000}</style>
+          <style>.rb-btn{flex:1;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;transition:all .2s}.rb-btn:hover{background:#A7C9D9;border-color:#A7C9D9}.rb-cart{width:100%;padding:12px 20px;border:1px solid #222;background:#fff;color:#222;cursor:pointer;font-weight:500;text-transform:uppercase;margin-top:10px;transition:all .2s}.rb-cart:hover{background:#000;color:#fff;border-color:#000}</style>
           <div style="display:flex;gap:10px;margin-top:10px;">
             <button type="button" class="rb-btn" onclick="handleRingBuilderClick('ring')">{{ block.settings.add_to_ring_text }}</button>
             <button type="button" class="rb-btn" onclick="handleRingBuilderClick('pendant')">{{ block.settings.add_to_pendant_text }}</button>

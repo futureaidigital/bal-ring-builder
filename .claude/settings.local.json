@@ -9,7 +9,8 @@
       "Bash(npm install:*)",
       "Bash(npx prisma generate)",
       "Bash(git push:*)",
-      "Bash(npx shopify app deploy:*)"
+      "Bash(npx shopify app deploy:*)",
+      "Bash(shopify app deploy:*)"
     ]
   }
 }

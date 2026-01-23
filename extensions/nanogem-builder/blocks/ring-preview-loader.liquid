@@ -70,17 +70,6 @@
         var setting = await settingRes.json();
       }
       
-      // Debug log to verify metafields
-      console.log('Gemstone data with metafields:', gemstone);
-      console.log('Gemstone metafields:', gemstone.metafields);
-      console.log('Setting data with metafields:', setting);
-      console.log('Setting metafields:', setting.metafields);
-      // Log all setting variants with their metafields
-      console.log('=== ALL SETTING VARIANTS ===');
-      setting.variants.forEach(v => {
-        console.log(`Variant ${v.id} (${v.title}):`, v);
-        console.log('Variant metafields:', v.metafields);
-      });
       let settingVariant = setting.variants[0];
       if (settingVariantId) {
         const match = setting.variants.find(v => v.id == settingVariantId);
@@ -261,11 +250,6 @@
   }
   
   function updateAddToCart(gemstone, settingVariant) {
-    console.log('=== updateAddToCart DEBUG ===');
-    console.log('Gemstone:', gemstone);
-    console.log('Setting variant:', settingVariant);
-    
-    // Find ALL possible submit buttons with a more comprehensive selector
     const buttonSelectors = [
       'button[type="submit"]',
       'input[type="submit"]', 
