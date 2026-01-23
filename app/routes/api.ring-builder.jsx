@@ -2099,7 +2099,7 @@ function getRingBuilderCSS() {
     .clean-settings-card__price{display:flex;align-items:baseline;gap:0px;margin-top:0;padding-top:0px;justify-content:center}
     .clean-settings-card__actions{display:none!important}
     .clean-settings-card__image--secondary{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity 0.3s ease}
-    .clean-settings-card:hover .clean-settings-card__image--secondary{opacity:1}
+    .clean-settings-card__image-container:hover .clean-settings-card__image--secondary{opacity:1}
     .clean-settings-card.no-hover .clean-settings-card__image--secondary{opacity:0!important}
     
     /* Metal Swatches */
