@@ -3166,25 +3166,39 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
                   }
                 }).join('');
               }
-              // Special handling for metal type - show as image swatches
+              // Special handling for metal type - show as image swatches (dynamic based on collection)
               else if (filterType === 'metal' && ${hasSets}) {
                 const metalImages = {
                   'White Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-gold.png',
                   'Yellow Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/yellow-gold.png',
-                  'Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18-rose-gold-icon.png'
+                  'Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18-rose-gold-icon.png',
+                  'Platinum': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/platinum.png',
+                  'White & Yellow Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-yellow-gold.png',
+                  'White & Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-rose-gold.png'
                 };
-                
-                container.innerHTML = 
+
+                container.innerHTML =
                   '<div class=\\"metal-filter-swatches\\">' +
-                    Object.entries(metalImages).map(([metal, image]) => 
-                      '<label class=\\"metal-filter-swatch\\">' +
-                        '<input type=\\"radio\\" name=\\"metal-filter\\" class=\\"filter-checkbox\\" value=\\"' + metal + '\\" data-filter=\\"metal\\">' +
-                        '<div class=\\"metal-filter-image\\">' +
-                          '<img src=\\"' + image + '\\" alt=\\"' + metal + '\\">' +
-                        '</div>' +
-                        '<span class=\\"metal-filter-label\\">' + metal + '</span>' +
-                      '</label>'
-                    ).join('') +
+                    Array.from(values).sort().map(metal => {
+                      const image = metalImages[metal];
+                      if (image) {
+                        return '<label class=\\"metal-filter-swatch\\">' +
+                          '<input type=\\"radio\\" name=\\"metal-filter\\" class=\\"filter-checkbox\\" value=\\"' + metal + '\\" data-filter=\\"metal\\">' +
+                          '<div class=\\"metal-filter-image\\">' +
+                            '<img src=\\"' + image + '\\" alt=\\"' + metal + '\\">' +
+                          '</div>' +
+                          '<span class=\\"metal-filter-label\\">' + metal + '</span>' +
+                        '</label>';
+                      } else {
+                        return '<label class=\\"metal-filter-swatch\\">' +
+                          '<input type=\\"radio\\" name=\\"metal-filter\\" class=\\"filter-checkbox\\" value=\\"' + metal + '\\" data-filter=\\"metal\\">' +
+                          '<div class=\\"metal-filter-image metal-filter-text\\">' +
+                            '<span>' + metal + '</span>' +
+                          '</div>' +
+                          '<span class=\\"metal-filter-label\\">' + metal + '</span>' +
+                        '</label>';
+                      }
+                    }).join('') +
                   '</div>';
               } else if (values.size > 0) {
                 // Regular population for other filters
