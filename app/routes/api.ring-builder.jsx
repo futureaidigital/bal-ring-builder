@@ -3237,12 +3237,12 @@ function getRingBuilderJS(hasGems, hasSets, shop, currencyCode = 'AED', moneyFor
               // Special handling for metal type - show as image swatches (dynamic based on collection)
               else if (filterType === 'metal' && ${hasSets}) {
                 const metalImages = {
-                  'White Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-gold.png',
-                  'Yellow Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/yellow-gold.png',
-                  'Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18-rose-gold-icon.png',
+                  'White Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-white-gold-icon.png',
+                  'Yellow Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-yellow-gold-icon.png',
+                  'Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-rose-gold-icon.png',
                   'Platinum': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/platinum.png',
-                  'White & Yellow Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-yellow-gold.png',
-                  'White & Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/white-rose-gold.png'
+                  'White & Yellow Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-white-yellow-gold-icon.png',
+                  'White & Rose Gold': 'https://pub-da29e7d7020a43b19575bf42b3247b0a.r2.dev/18k-white-rose-gold-icon.png'
                 };
 
                 container.innerHTML =
