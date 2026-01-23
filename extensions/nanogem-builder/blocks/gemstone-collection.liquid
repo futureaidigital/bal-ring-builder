@@ -222,153 +222,35 @@ body.rb-active .empty-state {
 
 <script>
 (function() {
-  console.log('🔍 RING BUILDER DEBUG START');
-  
-  // Add rb-active class immediately
   document.body.classList.add('rb-active');
-  console.log('✅ Added rb-active class to body');
-  console.log('Body classes:', document.body.className);
-  
-  // Debug function to check what's visible
-  const debugVisibility = () => {
-    console.log('🔍 CHECKING VISIBILITY:');
-    
-    // Check if rb-active is still on body
-    console.log('rb-active on body?', document.body.classList.contains('rb-active'));
-    
-    // Check main collection section
-    const mainCollectionSection = document.querySelector('.shopify-section--main-collection');
-    if (mainCollectionSection) {
-      const styles = window.getComputedStyle(mainCollectionSection);
-      console.log('Main collection section found:', {
-        display: styles.display,
-        visibility: styles.visibility,
-        opacity: styles.opacity,
-        height: styles.height
-      });
-    } else {
-      console.log('❌ No .shopify-section--main-collection found');
-    }
-    
-    // Check collection elements
-    const collectionElements = [
-      '.collection',
-      '.collection__main',
-      '.collection-toolbar',
-      'product-list',
-      '.product-list',
-      '.color-scheme',
-      '.container'
-    ];
-    
-    collectionElements.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      if (elements.length > 0) {
-        console.log(`Found ${elements.length} ${selector} elements`);
-        elements.forEach((el, index) => {
-          const styles = window.getComputedStyle(el);
-          if (styles.display !== 'none') {
-            console.log(`⚠️ ${selector}[${index}] is still visible:`, {
-              display: styles.display,
-              visibility: styles.visibility
-            });
-          }
-        });
-      }
-    });
-    
-    // Check if our CSS is being applied
-    const testElement = document.querySelector('.collection');
-    if (testElement) {
-      // Create a test to see if our CSS is loading
-      const shouldBeHidden = window.getComputedStyle(testElement).display;
-      console.log('Collection element display value:', shouldBeHidden);
-      console.log('Expected: none, Actual:', shouldBeHidden);
-    }
-  };
-  
-  // Hide Prestige elements with debugging
+
   const hidePrestigeElements = () => {
-    console.log('🔧 Attempting to hide Prestige elements...');
-    
-    // Try multiple selectors for the main section
-    const mainSelectors = [
-      '.shopify-section--main-collection',
-      '[class*="main-collection"]',
-      'section[id*="main-collection"]'
-    ];
-    
-    mainSelectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      if (elements.length > 0) {
-        console.log(`Found ${elements.length} elements with selector: ${selector}`);
-        elements.forEach(el => {
-          el.style.setProperty('display', 'none', 'important');
-          el.style.setProperty('visibility', 'hidden', 'important');
-        });
-      }
+    ['.shopify-section--main-collection','[class*="main-collection"]','section[id*="main-collection"]'].forEach(s => {
+      document.querySelectorAll(s).forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+      });
     });
-    
-    // Hide specific elements with force
-    const elementsToHide = [
-      '.collection-toolbar',
-      'facets-drawer',
-      '.facets-drawer', 
-      '.facets-sidebar',
-      'safe-sticky',
-      '.collection',
-      '.collection__main',
-      'product-list',
-      '.product-list',
-      '.empty-state',
-      '.color-scheme:has(.collection)',
-      '.container:has(.collection)'
-    ];
-    
-    elementsToHide.forEach(selector => {
+    ['.collection-toolbar','facets-drawer','.facets-drawer','.facets-sidebar','safe-sticky','.collection','.collection__main','product-list','.product-list','.empty-state','.color-scheme:has(.collection)','.container:has(.collection)'].forEach(s => {
       try {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(el => {
-          console.log(`Hiding ${selector}`);
+        document.querySelectorAll(s).forEach(el => {
           el.style.setProperty('display', 'none', 'important');
           el.style.setProperty('visibility', 'hidden', 'important');
           el.style.setProperty('opacity', '0', 'important');
           el.style.setProperty('height', '0', 'important');
           el.style.setProperty('overflow', 'hidden', 'important');
         });
-      } catch(e) {
-        console.log(`Error with selector ${selector}:`, e.message);
-      }
+      } catch(e) {}
     });
   };
-  
-  // Initial debug
-  debugVisibility();
-  
-  // Hide immediately
-  hidePrestigeElements();
-  
-  // Check again after hiding
-  setTimeout(() => {
-    console.log('🔍 CHECKING AFTER HIDE ATTEMPT:');
-    debugVisibility();
-  }, 100);
-  
-  // Continue with ring builder loading
-  const container = document.getElementById('ring-builder-container');
-  if (!container) {
-    console.log('❌ No ring builder container found!');
-    return;
-  }
-  
-  // Get current currency from Shopify
-  const currentCurrency = window.Shopify?.currency?.active || 
-                        window.Shopify?.currency?.current || 
-                        document.querySelector('[name="currency"]')?.value ||
-                        document.querySelector('.currency-selector__value')?.textContent?.trim() ||
-                        'USD';
 
-  console.log('Detected currency:', currentCurrency);
+  hidePrestigeElements();
+  setTimeout(hidePrestigeElements, 100);
+
+  const container = document.getElementById('ring-builder-container');
+  if (!container) return;
+
+  const currentCurrency = window.Shopify?.currency?.active || window.Shopify?.currency?.current || document.querySelector('[name="currency"]')?.value || document.querySelector('.currency-selector__value')?.textContent?.trim() || 'USD';
 
   const params = new URLSearchParams({
     collection: container.dataset.collection,
@@ -376,95 +258,54 @@ body.rb-active .empty-state {
     gemstone: new URLSearchParams(location.search).get('gemstone') || '',
     setting: new URLSearchParams(location.search).get('setting') || '',
     setting_variant: new URLSearchParams(location.search).get('setting_variant') || '',
-    currency: currentCurrency  // ADD THIS LINE
+    currency: currentCurrency
   });
-  
-  console.log('Fetching from:', '/apps/nanogem-builder/ring-builder');
-  
+
   fetch('/apps/nanogem-builder/ring-builder?' + params)
     .then(response => {
-      console.log('Response status:', response.status);
       if (!response.ok) throw new Error('Network response was not ok');
       return response.text();
     })
     .then(html => {
-      console.log('HTML length:', html.length);
-      console.log('Response received');
-      
-      // FIXED: Target the content div, not the whole container
       const contentDiv = container.querySelector('.rb-content');
-      if (contentDiv) {
-        contentDiv.innerHTML = html;
-      } else {
-        // Fallback if .rb-content doesn't exist
-        container.innerHTML = html;
-      }
-      
-      // Add rb-loaded class to hide skeletons
+      if (contentDiv) contentDiv.innerHTML = html;
+      else container.innerHTML = html;
+
       container.classList.add('rb-loaded');
-      
-      // Make sure body still has rb-active class after content loads
       document.body.classList.add('rb-active');
-      
-      // Hide Prestige elements again after content loads
       hidePrestigeElements();
-      
-      // Debug again
-      setTimeout(() => {
-        console.log('🔍 FINAL CHECK AFTER RING BUILDER LOADS:');
-        debugVisibility();
-      }, 500);
-      
-      // Execute any scripts that were in the HTML
+
       const scripts = container.querySelectorAll('script');
       scripts.forEach(script => {
         const newScript = document.createElement('script');
         newScript.textContent = script.textContent;
         document.body.appendChild(newScript);
       });
-      
-      // Now wait for RBA to be available and initialize
+
       setTimeout(() => {
         if (window.RBA && window.RBA.init) {
-          console.log('Initializing RBA after scripts load');
           window.RBA.init();
-          // Hide Prestige elements one more time after RBA initializes
           hidePrestigeElements();
-        } else {
-          console.error('RBA still not found after executing scripts');
         }
       }, 200);
     })
     .catch(error => {
-      console.error('Error loading ring builder:', error);
-      // On error, hide skeletons and show error message
       container.classList.add('rb-loaded');
       const contentDiv = container.querySelector('.rb-content');
-      if (contentDiv) {
-        contentDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Error loading ring builder. Please refresh the page.</div>';
-      } else {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Error loading ring builder. Please refresh the page.</div>';
-      }
+      if (contentDiv) contentDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Error loading ring builder. Please refresh the page.</div>';
+      else container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Error loading ring builder. Please refresh the page.</div>';
     });
 
-  // ADD THE CURRENCY HANDLING CODE HERE:
-  // Listen for currency changes if your theme supports it
   document.addEventListener('currency:changed', function(event) {
-    console.log('Currency changed to:', event.detail?.currency);
-    // Reload the ring builder with new currency
     const container = document.getElementById('ring-builder-container');
-    if (container && container.classList.contains('rb-loaded')) {
-      location.reload(); // Simple reload, or you could re-fetch with new currency
-    }
+    if (container && container.classList.contains('rb-loaded')) location.reload();
   });
 
-  // Alternative: listen for Shopify currency form changes
   const currencyForm = document.querySelector('form[action="/cart/update"]');
   if (currencyForm) {
     const currencySelector = currencyForm.querySelector('[name="currency"]');
     if (currencySelector) {
       currencySelector.addEventListener('change', function() {
-        console.log('Currency changed via form to:', this.value);
         location.reload();
       });
     }

@@ -99,17 +99,6 @@
   <script>
   (function() {
     const blockId = '{{ block.id }}';
-    const debugMode = {{ block.settings.debug_mode | json }};
-    
-    if (debugMode) {
-      console.log('🎯 Dynamic Gemstone Info starting for:', '{{ product.handle }}');
-      console.log('Metafields:', {
-        origin: '{{ product.metafields.custom.gemstone_origin }}',
-        treatment: '{{ product.metafields.custom.gemstone_treatment }}',
-        certificate: '{{ product.metafields.custom.certification_laboratory }}'
-      });
-    }
-    
     const params = new URLSearchParams({
       shop: '{{ shop.permanent_domain }}',
       product_handle: '{{ product.handle }}',
@@ -117,49 +106,18 @@
       show_title: '{{ block.settings.show_title }}',
       cards_per_row: '{{ block.settings.cards_per_row }}'
     });
-
-    const appUrl = '/apps/nanogem-builder/gemstone-info?' + params.toString();
-    
-    if (debugMode) {
-      console.log('Fetching from:', appUrl);
-    }
-    
-    fetch(appUrl)
+    fetch('/apps/nanogem-builder/gemstone-info?' + params.toString())
       .then(response => {
-        if (debugMode) {
-          console.log('Response status:', response.status);
-        }
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.text();
       })
       .then(html => {
-        if (debugMode) {
-          console.log('✅ Received HTML, length:', html.length);
-        }
-        
         const container = document.getElementById(`dynamic-gemstone-${blockId}`);
-        if (container) {
-          container.innerHTML = html;
-          
-          if (debugMode) {
-            console.log('✅ Dynamic gemstone info loaded');
-          }
-        }
+        if (container) container.innerHTML = html;
       })
       .catch(error => {
-        console.error('❌ Error loading gemstone info:', error);
         const container = document.getElementById(`dynamic-gemstone-${blockId}`);
-        if (container) {
-          container.innerHTML = `
-            <div style="text-align: center; padding: 40px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
-              <p style="color: #dc2626; margin: 0 0 10px 0; font-weight: 600;">Unable to load gemstone information</p>
-              <p style="color: #666; font-size: 14px; margin: 0;">Please refresh the page.</p>
-              ${debugMode ? `<p style="color: #666; font-size: 12px; margin-top: 10px;">Error: ${error.message}</p>` : ''}
-            </div>
-          `;
-        }
+        if (container) container.innerHTML = '<div style="text-align:center;padding:40px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;"><p style="color:#dc2626;margin:0 0 10px 0;font-weight:600;">Unable to load gemstone information</p><p style="color:#666;font-size:14px;margin:0;">Please refresh the page.</p></div>';
       });
   })();
   </script>

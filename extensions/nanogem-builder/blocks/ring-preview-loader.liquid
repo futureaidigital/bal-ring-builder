@@ -52,8 +52,7 @@
       
       if (!gemstoneRes.ok || !settingRes.ok) {
         // Fallback to .js endpoint if app proxy fails
-        console.warn('App proxy failed, falling back to .js endpoint');
-        const [gemstoneResJS, settingResJS] = await Promise.all([
+                const [gemstoneResJS, settingResJS] = await Promise.all([
           fetch(`/products/${gemstoneHandle}.js`),
           fetch(`/products/${settingHandle}.js`)
         ]);

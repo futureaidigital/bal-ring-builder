@@ -385,42 +385,21 @@
     
     <script>
     (function() {
-      console.log('Product Builder: Starting load for', '{{ product.handle }}');
-      console.log('Product type:', '{{ product.type }}');
-      console.log('Product tags:', {{ product.tags | json }});
-      
-      // Get current URL parameters
       const urlParams = new URLSearchParams(window.location.search);
-      
-      // Build the app proxy URL
       const appProxyBase = '{{ app_proxy_url }}';
       const appUrl = new URL(appProxyBase, window.location.origin);
-      
-      // Add any URL parameters
       urlParams.forEach((value, key) => {
-        if (!appUrl.searchParams.has(key)) {
-          appUrl.searchParams.append(key, value);
-        }
+        if (!appUrl.searchParams.has(key)) appUrl.searchParams.append(key, value);
       });
-      
-      console.log('Fetching from:', appUrl.toString());
-      
-      // Fetch content from app proxy
       fetch(appUrl.toString())
         .then(response => {
-          console.log('Response status:', response.status);
-          if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`Network response was not ok: ${response.status}`);
           return response.text();
         })
         .then(html => {
-          console.log('Received HTML length:', html.length);
           const container = document.getElementById('product-builder-{{ product.id }}');
           if (container) {
             container.innerHTML = html;
-            
-            // Execute any scripts that were in the returned HTML
             const scripts = container.querySelectorAll('script');
             scripts.forEach(oldScript => {
               const newScript = document.createElement('script');
@@ -431,18 +410,9 @@
           }
         })
         .catch(error => {
-          console.error('Error loading product builder:', error);
           const container = document.getElementById('product-builder-{{ product.id }}');
           if (container) {
-            container.innerHTML = `
-              <div style="text-align: center; padding: 20px; background: #fee; border: 1px solid #fcc; border-radius: 6px; margin: 10px 0;">
-                <p style="color: #c00; margin: 0 0 10px 0;">Unable to load product builder</p>
-                <p style="color: #666; font-size: 14px; margin: 0;">Please refresh the page or contact support if the problem persists.</p>
-                {% if block.settings.debug_mode %}
-                <p style="color: #666; font-size: 12px; margin-top: 10px;">Error: ${error.message}</p>
-                {% endif %}
-              </div>
-            `;
+            container.innerHTML = `<div style="text-align: center; padding: 20px; background: #fee; border: 1px solid #fcc; border-radius: 6px; margin: 10px 0;"><p style="color: #c00; margin: 0 0 10px 0;">Unable to load product builder</p><p style="color: #666; font-size: 14px; margin: 0;">Please refresh the page or contact support if the problem persists.</p></div>`;
           }
         });
     })();
