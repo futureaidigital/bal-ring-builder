@@ -1300,41 +1300,66 @@ function generateSettingsCard(product, urlParams = {}, currencyCode = 'AED', mon
   // Create variant data mapping for swatches
   const variantData = {};
   product.variants.forEach((v, index) => {
-    const colorMatch = v.options.option1?.match(/(White|Yellow|Rose|Pink)/i);
-    if (colorMatch) {
-      let color = colorMatch[1].charAt(0).toUpperCase() + colorMatch[1].slice(1).toLowerCase();
-      if (color === 'Pink') color = 'Rose';
-      
-      if (!variantData[color]) variantData[color] = [];
-      
-      let variantImage = product.featuredImage;
-      const variantColor = color.toLowerCase();
-      const matchingImageIndex = product.images.findIndex(img => {
-        const imgLower = img.toLowerCase();
-        if (variantColor === 'rose') {
-          return imgLower.includes('rose') || imgLower.includes('pink') || imgLower.includes('18k');
-        }
-        return imgLower.includes(variantColor + '-gold') || 
-               imgLower.includes(variantColor + '_gold') ||
-               imgLower.includes(variantColor);
-      });
-      
-      if (matchingImageIndex !== -1) {
-        variantImage = product.images[matchingImageIndex];
-      } else {
-        const colorOrder = ['white', 'yellow', 'rose'];
-        const colorIndex = colorOrder.indexOf(variantColor);
-        if (colorIndex !== -1 && product.images[colorIndex]) {
-          variantImage = product.images[colorIndex];
-        }
+    const metal = v.options.option1;
+    if (!metal) return;
+
+    // Check for bi-color metals first (e.g., "18k White & Rose Gold")
+    const biColorMatch = metal.match(/(White|Yellow|Rose)\s*&\s*(White|Yellow|Rose)/i);
+    let color;
+
+    if (biColorMatch) {
+      const color1 = biColorMatch[1].charAt(0).toUpperCase() + biColorMatch[1].slice(1).toLowerCase();
+      const color2 = biColorMatch[2].charAt(0).toUpperCase() + biColorMatch[2].slice(1).toLowerCase();
+      color = `${color1} & ${color2}`;
+    } else {
+      const colorMatch = metal.match(/(White|Yellow|Rose|Pink)/i);
+      if (colorMatch) {
+        color = colorMatch[1].charAt(0).toUpperCase() + colorMatch[1].slice(1).toLowerCase();
+        if (color === 'Pink') color = 'Rose';
       }
-      
-      variantData[color].push({
-        id: v.id,
-        price: v.price,
-        image: variantImage
-      });
     }
+
+    if (!color) return;
+    if (!variantData[color]) variantData[color] = [];
+
+    let variantImage = product.featuredImage;
+    const variantColorLower = color.toLowerCase();
+
+    // Find matching image based on color
+    const matchingImageIndex = product.images.findIndex(img => {
+      const imgLower = img.toLowerCase();
+      // For bi-color, look for both colors or combined pattern
+      if (variantColorLower.includes(' & ')) {
+        const [c1, c2] = variantColorLower.split(' & ');
+        return (imgLower.includes(c1) && imgLower.includes(c2)) ||
+               imgLower.includes(c1 + '-' + c2) ||
+               imgLower.includes(c1 + '_' + c2);
+      }
+      // For rose, also check pink and 18k
+      if (variantColorLower === 'rose') {
+        return imgLower.includes('rose') || imgLower.includes('pink') || imgLower.includes('18k');
+      }
+      return imgLower.includes(variantColorLower + '-gold') ||
+             imgLower.includes(variantColorLower + '_gold') ||
+             imgLower.includes(variantColorLower);
+    });
+
+    if (matchingImageIndex !== -1) {
+      variantImage = product.images[matchingImageIndex];
+    } else if (!variantColorLower.includes(' & ')) {
+      // Fallback for single colors only
+      const colorOrder = ['white', 'yellow', 'rose'];
+      const colorIndex = colorOrder.indexOf(variantColorLower);
+      if (colorIndex !== -1 && product.images[colorIndex]) {
+        variantImage = product.images[colorIndex];
+      }
+    }
+
+    variantData[color].push({
+      id: v.id,
+      price: v.price,
+      image: variantImage
+    });
   });
   
   return `
