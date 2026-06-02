@@ -90,135 +90,30 @@ export const loader = async ({ request }) => {
             # Diamond metafields - with reference resolution for metaobject fields
             labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             stoneWeight: metafield(namespace: "custom", key: "stone_weight") {
               value
             }
             stoneShape: metafield(namespace: "custom", key: "stone_shape") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             stoneColor: metafield(namespace: "custom", key: "stone_color") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             stoneClarity: metafield(namespace: "custom", key: "stone_clarity") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             stoneDimensions: metafield(namespace: "custom", key: "stone_dimensions") {
               value
             }
             cutGrade: metafield(namespace: "custom", key: "cut_grade") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             polishGrade: metafield(namespace: "custom", key: "polish_grade") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             symmetryGrade: metafield(namespace: "custom", key: "symmetry_grade") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             treatment: metafield(namespace: "custom", key: "treatment") {
               value
@@ -228,76 +123,16 @@ export const loader = async ({ request }) => {
             }
             fluorescence: metafield(namespace: "custom", key: "fluorescence") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             # Setting metafields - with reference resolution
             centerStoneShape: metafield(namespace: "custom", key: "center_stone_shape") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             ringStyle: metafield(namespace: "custom", key: "ring_style") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
             metalType: metafield(namespace: "custom", key: "metal_type") {
               value
-              type
-              reference {
-                ... on Metaobject {
-                  displayName
-                  handle
-                }
-              }
-              references(first: 10) {
-                nodes {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-              }
             }
           }
         }
@@ -352,75 +187,11 @@ export const loader = async ({ request }) => {
       return gids;
     };
 
-    // Collect all unresolved GIDs from metafields
-    const unresolvedGids = new Set();
-    const metafieldsToCheck = [
-      product.labDiamondType,
-      product.stoneShape,
-      product.stoneColor,
-      product.stoneClarity,
-      product.cutGrade,
-      product.polishGrade,
-      product.symmetryGrade,
-      product.fluorescence,
-      product.centerStoneShape,
-      product.ringStyle,
-      product.metalType
-    ];
-
-    metafieldsToCheck.forEach(mf => {
-      if (!mf) return;
-      // If reference/references didn't resolve, collect the GIDs
-      const hasResolvedRef = mf.reference?.displayName || mf.reference?.handle;
-      const hasResolvedRefs = mf.references?.nodes?.length > 0;
-
-      if (!hasResolvedRef && !hasResolvedRefs && mf.value) {
-        extractGids(mf.value).forEach(gid => unresolvedGids.add(gid));
-      }
-    });
-
-    // Fetch unresolved metaobjects in a second query
+    // Metaobject references are NOT resolved here: the app lacks the read_metaobjects
+    // scope, and reading Metaobjects (via reference/references or nodes(ids:)) returns
+    // "Access denied for Metaobject object" and 500s the route. Metaobject-backed fields
+    // (shape, diamond type, etc.) fall back to '' in getMetafieldValue below.
     const metaobjectMap = new Map();
-    console.log('Unresolved GIDs:', Array.from(unresolvedGids));
-
-    if (unresolvedGids.size > 0) {
-      const gidArray = Array.from(unresolvedGids);
-      console.log('Fetching metaobjects for GIDs:', gidArray);
-      try {
-        const metaobjectResponse = await admin.graphql(
-          `#graphql
-            query getMetaobjects($ids: [ID!]!) {
-              nodes(ids: $ids) {
-                ... on Metaobject {
-                  id
-                  displayName
-                  handle
-                }
-              }
-            }
-          `,
-          {
-            variables: {
-              ids: gidArray,
-            },
-          }
-        );
-        const metaobjectData = await metaobjectResponse.json();
-        console.log('Metaobject response:', JSON.stringify(metaobjectData));
-
-        if (metaobjectData.data?.nodes) {
-          metaobjectData.data.nodes.forEach(node => {
-            if (node && node.id) {
-              console.log('Resolved metaobject:', node.id, '->', node.displayName || node.handle);
-              metaobjectMap.set(node.id, node.displayName || node.handle || '');
-            }
-          });
-        }
-        console.log('Metaobject map:', Object.fromEntries(metaobjectMap));
-      } catch (e) {
-        console.error('Error fetching metaobjects:', e);
-      }
-    }
 
     // Helper to extract value from metaobject references
     const getMetafieldValue = (metafield) => {
