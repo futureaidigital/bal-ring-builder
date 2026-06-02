@@ -20,7 +20,7 @@ export async function action({ request, params }) {
     // Get product variants
     const productsQuery = `
       query getProducts($gemstoneHandle: String!, $settingHandle: String!) {
-        gemstone: productByHandle(handle: $gemstoneHandle) {
+        gemstone: product(handle: $gemstoneHandle) {
           id
           title
           variants(first: 1) {
@@ -35,7 +35,7 @@ export async function action({ request, params }) {
             }
           }
         }
-        setting: productByHandle(handle: $settingHandle) {
+        setting: product(handle: $settingHandle) {
           id
           title
           variants(first: 1) {
@@ -60,12 +60,16 @@ export async function action({ request, params }) {
       }
     });
 
-    if (!data.gemstone || !data.setting) {
+    if (!data?.gemstone || !data?.setting) {
       return json({ error: "Products not found" }, { status: 404 });
     }
 
-    const gemstoneVariantId = data.gemstone.variants.edges[0].node.id;
-    const settingVariantId = data.setting.variants.edges[0].node.id;
+    const gemstoneVariantId = data.gemstone.variants?.edges?.[0]?.node?.id;
+    const settingVariantId = data.setting.variants?.edges?.[0]?.node?.id;
+
+    if (!gemstoneVariantId || !settingVariantId) {
+      return json({ error: "Product variants not found" }, { status: 404 });
+    }
 
     // Create cart with both items
     const cartCreateMutation = `

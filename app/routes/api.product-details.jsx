@@ -15,7 +15,7 @@ export const loader = async ({ request }) => {
     const response = await admin.graphql(
       `#graphql
         query getProduct($handle: String!) {
-          productByHandle(handle: $handle) {
+          productByIdentifier(identifier: {handle: $handle}) {
             id
             title
             handle
@@ -309,14 +309,16 @@ export const loader = async ({ request }) => {
       }
     );
 
-    const { data } = await response.json();
-
-    if (!data.productByHandle) {
-      return json({ error: "Product not found" }, { status: 404 });
+    const result = await response.json();
+    if (result.errors) {
+      console.error('GraphQL errors in product-details:', JSON.stringify(result.errors));
     }
 
-    // Transform the data to a simpler format
-    const product = data.productByHandle;
+    const product = result.data?.productByIdentifier;
+
+    if (!product) {
+      return json({ error: "Product not found" }, { status: 404 });
+    }
 
     // DEBUG: Log raw metafield data
     console.log('=== PRODUCT-DETAILS DEBUG for:', product.title, '===');
@@ -561,7 +563,7 @@ export const loader = async ({ request }) => {
     });
     
     // Format images
-    const images = product.images.edges.map(edge => edge.node.url);
+    const images = product.images?.edges?.map(edge => edge.node.url) || [];
 
     // Build response
     const productData = {
@@ -571,7 +573,7 @@ export const loader = async ({ request }) => {
       type: product.productType,
       vendor: product.vendor,
       tags: product.tags,
-      price: parseFloat(product.priceRangeV2.minVariantPrice.amount) * 100, // Convert to cents
+      price: parseFloat(product.priceRangeV2?.minVariantPrice?.amount || 0) * 100, // Convert to cents
       featured_image: product.featuredImage?.url,
       images: images,
       variants: variants,

@@ -18,7 +18,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const response = await admin.graphql(
       `#graphql
         query getGemstoneDetails($handle: String!) {
-          productByHandle(handle: $handle) {
+          productByIdentifier(identifier: {handle: $handle}) {
             id
             title
             handle
@@ -76,18 +76,21 @@ export const loader: LoaderFunction = async ({ request }) => {
       { variables: { handle } }
     );
     
-    const { data } = await response.json();
-    const product = data?.productByHandle;
-    
+    const result = await response.json();
+    if (result.errors) {
+      console.error('GraphQL errors in instore.gemstone-detail:', JSON.stringify(result.errors));
+    }
+    const product = result.data?.productByIdentifier;
+
     if (!product) {
       return new Response("Product not found", { status: 404 });
     }
-    
+
     // Extract product data
     const productId = product.id.split('/').pop();
-    const images = product.images.edges.map(edge => edge.node);
-    const price = parseFloat(product.priceRangeV2.minVariantPrice.amount);
-    const currency = product.priceRangeV2.minVariantPrice.currencyCode;
+    const images = product.images?.edges?.map(edge => edge.node) || [];
+    const price = parseFloat(product.priceRangeV2?.minVariantPrice?.amount || 0);
+    const currency = product.priceRangeV2?.minVariantPrice?.currencyCode || '';
     const firstVariant = product.variants.edges[0]?.node;
     
     // Parse shape from metaobject reference (format: "center_stone_shape.round" -> "Round")

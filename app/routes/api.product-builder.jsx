@@ -112,14 +112,14 @@ async function fetchProductDetails(admin, handle) {
     const response = await admin.graphql(
       `#graphql
       query getProduct($handle: String!) {
-        productByHandle(handle: $handle) {
+        productByIdentifier(identifier: {handle: $handle}) {
           id
           title
           handle
           productType
           vendor
           tags
-          priceRange {
+          priceRangeV2 {
             minVariantPrice {
               amount
               currencyCode
@@ -176,9 +176,12 @@ async function fetchProductDetails(admin, handle) {
       { variables: { handle } }
     );
     
-    const { data } = await response.json();
-    return data?.productByHandle;
-    
+    const result = await response.json();
+    if (result.errors) {
+      console.error('GraphQL errors in fetchProductDetails:', JSON.stringify(result.errors));
+    }
+    return result.data?.productByIdentifier || null;
+
   } catch (error) {
     console.error('Error fetching product:', error);
     return null;
@@ -294,8 +297,8 @@ function processProductData(product) {
     type: product.productType,
     vendor: product.vendor,
     tags: product.tags,
-    price: product.priceRange.minVariantPrice.amount,
-    currency: product.priceRange.minVariantPrice.currencyCode,
+    price: product.priceRangeV2.minVariantPrice.amount,
+    currency: product.priceRangeV2.minVariantPrice.currencyCode,
     metafields,
     variants,
     selected_or_first_available_variant: firstAvailable

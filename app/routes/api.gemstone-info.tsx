@@ -37,7 +37,7 @@ export const loader = async ({ request }) => {
     // Fetch product metafields (updated for diamonds)
     const response = await admin.graphql(`
       query getProductMetafields($handle: String!) {
-        productByHandle(handle: $handle) {
+        productByIdentifier(identifier: {handle: $handle}) {
           title
           # Diamond metafields
           labDiamondType: metafield(namespace: "custom", key: "lab_diamond_type") { value }
@@ -57,7 +57,10 @@ export const loader = async ({ request }) => {
     `, { variables: { handle: productHandle } });
 
     const data = await response.json();
-    const product = data.data?.productByHandle;
+    if (data.errors) {
+      console.error('GraphQL errors in gemstone-info:', JSON.stringify(data.errors));
+    }
+    const product = data.data?.productByIdentifier;
 
     if (!product) {
       return new Response(`
