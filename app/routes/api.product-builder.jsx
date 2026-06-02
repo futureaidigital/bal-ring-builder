@@ -154,20 +154,6 @@ async function fetchProductDetails(admin, handle) {
                 key
                 value
                 type
-                reference {
-                  ... on Metaobject {
-                    displayName
-                    handle
-                  }
-                }
-                references(first: 5) {
-                  nodes {
-                    ... on Metaobject {
-                      displayName
-                      handle
-                    }
-                  }
-                }
               }
             }
           }
